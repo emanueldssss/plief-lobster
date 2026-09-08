@@ -13,3 +13,4 @@
 ## Suspicion zone
 - medium: standalone browser execution depends on a host Playwright/Chromium installation; the packaged core verifier remains portable.
 - low: L25-L48 live checks outside the golden browser scenarios were not available in this workspace.
+- high: npm publish of `plief-lobster@3.1.0` was rejected by registry with HTTP 404/permission; npm credentials or package ownership is required.
