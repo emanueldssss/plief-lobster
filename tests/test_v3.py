@@ -39,9 +39,22 @@ class V3Tests(unittest.TestCase):
         good = {"format":"lobster-receipt/v3","surface":"x","revision":"r","stages":{stage:"PASS" for stage in test_lobster.lobster.V3_STAGES}}
         for field in ("profile","research","platform_scout","provenance_lock","dependency_graph","scenario_run","craft_review","repair_ledger","verdict"):
             path = self.root / f"{field}.json"; path.write_text("{}", encoding="utf-8"); good[field] = {"path":path.name,"sha256":__import__('hashlib').sha256(path.read_bytes()).hexdigest()}
-        self.assertEqual(test_lobster.lobster.v3_verify(good, self.root)["status"], "READY_FOR_REVIEW")
-        good["stages"]["EXECUTION_VERIFIED"] = "PASS"; good["stages"]["IMPLEMENTATION_VERIFIED"] = "FAIL"
         self.assertEqual(test_lobster.lobster.v3_verify(good, self.root)["status"], "INCOMPLETE")
+        self.assertIn("LOBSTER_SCHEMA_REQUIRED_FIELD", " ".join(test_lobster.lobster.v3_verify(good, self.root)["issues"]))
+
+    def test_agent_stage_claim_cannot_upgrade_empty_artifacts(self):
+        good = {"format":"lobster-receipt/v3","surface":"x","revision":"r","stages":{stage:"PASS" for stage in test_lobster.lobster.V3_STAGES}}
+        for field in ("profile","research","platform_scout","provenance_lock","dependency_graph","scenario_run","craft_review","repair_ledger"):
+            path = self.root / f"{field}.json"; path.write_text("{}", encoding="utf-8"); good[field] = {"path":path.name,"sha256":__import__('hashlib').sha256(path.read_bytes()).hexdigest()}
+        result = test_lobster.lobster.v3_verify(good, self.root)
+        self.assertEqual(result["computed_verdict"], "INCOMPLETE")
+        self.assertNotIn("DELIVERY_READY", result["computed_stages"])
+
+    def test_v3_ignores_fake_verdict_pointer(self):
+        path = self.root / "verdict.json"; path.write_text(json.dumps({"schema":"lobster-verdict/v1","status":"DELIVERY_READY","stages":{}}), encoding="utf-8")
+        receipt = {"format":"lobster-receipt/v3","surface":"x","revision":"r","verdict":{"path":path.name,"sha256":__import__('hashlib').sha256(path.read_bytes()).hexdigest()}}
+        result = test_lobster.lobster.v3_verify(receipt, self.root)
+        self.assertEqual(result["status"], "INCOMPLETE")
 
 
 if __name__ == "__main__":

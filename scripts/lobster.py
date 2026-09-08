@@ -556,32 +556,81 @@ def auto_profile(project: Path, brief: str = "") -> dict:
     return {"schema": "lobster-surface-profile/v1", "source": "auto", "project": str(root), "signals": categories, "required_gates": sorted(set(required)), "not_applicable": [name for name, enabled in (("3d", categories["3d"]), ("motion", categories["motion"])) if not enabled]}
 
 
+def load_and_validate_artifact(reference, project, kind):
+    check = RecordCheck(project)
+    path = check.file(reference, f"{kind}.artifact")
+    if not path:
+        return None, check.issues
+    try:
+        value = read_json(path)
+    except (OSError, ValueError, TypeError) as error:
+        return None, [f"LOBSTER_SCHEMA_TYPE:{kind}: invalid JSON ({error})"]
+    if not isinstance(value, dict):
+        return None, [f"LOBSTER_SCHEMA_TYPE:{kind}: object required"]
+    schemas = {
+        "profile": ("schema", "signals", "required_gates"),
+        "research": ("schema", "need", "queries", "sources", "candidates", "implementation_impacts"),
+        "platform_scout": ("schema", "target_browsers", "checked_at", "decisions"),
+        "provenance_lock": ("schema", "components"),
+        "dependency_graph": ("schema", "entries", "nodes", "edges", "confidence", "fingerprint"),
+        "scenario_matrix": ("schema", "scenarios"),
+        "scenario_run": ("schema", "run_id", "runner", "runner_version", "scenario_hash", "project_fingerprint", "scenarios"),
+        "craft_review": ("schema", "independence", "findings"),
+        "repair_ledger": ("schema", "repairs"),
+        "verdict": ("schema", "status", "stages"),
+    }
+    for field in schemas.get(kind, ("schema",)):
+        if field not in value or value[field] in (None, "", [], {}):
+            check.issues.append(f"LOBSTER_SCHEMA_REQUIRED_FIELD:{kind}:{field}")
+    expected = {
+        "profile": "lobster-surface-profile/v1", "dependency_graph": "lobster-dependency-graph/v2",
+        "scenario_run": "lobster-runtime/v2", "craft_review": "lobster-visual-review/v1",
+        "verdict": "lobster-verdict/v1", "provenance_lock": "lobster-provenance/v1",
+    }
+    if kind in expected and value.get("schema") != expected[kind]:
+        check.issues.append(f"LOBSTER_SCHEMA_VERSION:{kind}:{expected[kind]}")
+    if kind == "scenario_run":
+        for field in ("started_at", "finished_at", "dependency_fingerprint"):
+            if not nonempty(value.get(field)):
+                check.issues.append(f"LOBSTER_RUNTIME_ATTESTATION_MISSING:{field}")
+        for scenario in value.get("scenarios", []) if isinstance(value.get("scenarios"), list) else []:
+            if not isinstance(scenario, dict) or not nonempty(scenario.get("id")) or scenario.get("status") not in ("PASS", "FAIL"):
+                check.issues.append("LOBSTER_RUNTIME_SCENARIO_INVALID")
+    if kind == "craft_review":
+        if value.get("independence") not in ("INDEPENDENT_CONTEXT", "SEPARATE_AGENT", "SAME_AGENT_FRESH_PASS", "UNVERIFIED"):
+            check.issues.append("LOBSTER_REVIEW_INDEPENDENCE_INVALID")
+    return value, check.issues
+
+
 def v3_verify(receipt, project: Path) -> dict:
     check = RecordCheck(project)
     if not check.require(isinstance(receipt, dict) and receipt.get("format") == "lobster-receipt/v3", "receipt: lobster-receipt/v3 required"):
         return check.result()
     for field in ("surface", "revision"):
         check.fields(receipt, [field], "receipt")
-    stages = receipt.get("stages")
-    if check.require(isinstance(stages, dict), "stages: object required"):
-        for stage in V3_STAGES:
-            value = stages.get(stage)
-            check.require(value in ("PASS", "FAIL", "N/A"), f"stages.{stage}: PASS, FAIL or N/A required")
-        for stage in V3_STAGES[1:]:
-            if stages.get(stage) == "PASS":
-                previous = V3_STAGES[V3_STAGES.index(stage) - 1]
-                check.require(stages.get(previous) in ("PASS", "N/A"), f"stages.{stage}: previous stage {previous} is not closed")
-    for field in ("profile", "research", "platform_scout", "provenance_lock", "dependency_graph", "scenario_run", "craft_review", "repair_ledger", "verdict"):
-        check.file(receipt.get(field), f"receipt.{field}")
-    verdict = receipt.get("verdict")
-    if isinstance(verdict, dict) and "path" in verdict:
-        verdict_path = check.file(verdict, "receipt.verdict")
-        verdict = read_json(verdict_path) if verdict_path else {}
-    if verdict and isinstance(verdict, dict):
-        check.require(verdict.get("status") in ("DELIVERY_READY", "INCOMPLETE"), "verdict.status: invalid")
-        if verdict.get("status") == "DELIVERY_READY":
-            check.require(all(receipt.get("stages", {}).get(stage) in ("PASS", "N/A") for stage in V3_STAGES), "DELIVERY_READY requires every applicable stage closed")
-    return check.result()
+    # stages and verdict are outputs, never trusted inputs.
+    ignored_stage_claim = receipt.get("stages")
+    if ignored_stage_claim is not None and not isinstance(ignored_stage_claim, dict):
+        check.issues.append("LOBSTER_STAGE_CLAIM_IGNORED_INVALID")
+    artifact_values = {}
+    artifact_issues = {}
+    for field in ("profile", "research", "platform_scout", "provenance_lock", "dependency_graph", "scenario_run", "craft_review", "repair_ledger"):
+        value, issues = load_and_validate_artifact(receipt.get(field), project, field)
+        artifact_values[field], artifact_issues[field] = value, issues
+        check.issues.extend(issues)
+    stages = {"RECORD_VALID": "PASS" if not artifact_issues.get("profile") else "FAIL"}
+    stages["SOURCE_VERIFIED"] = "PASS" if not artifact_issues.get("research") and not artifact_issues.get("platform_scout") and not artifact_issues.get("provenance_lock") else "FAIL"
+    stages["IMPLEMENTATION_VERIFIED"] = "PASS" if not artifact_issues.get("dependency_graph") and not artifact_issues.get("provenance_lock") else "FAIL"
+    run = artifact_values.get("scenario_run") or {}
+    stages["EXECUTION_VERIFIED"] = "PASS" if not artifact_issues.get("scenario_run") and all(item.get("status") == "PASS" for item in run.get("scenarios", [])) else "FAIL"
+    review = artifact_values.get("craft_review") or {}
+    critical_findings = [item for item in review.get("findings", []) if isinstance(item, dict) and item.get("severity") in ("CRITICAL", "MAJOR")]
+    stages["CRAFT_REVIEWED"] = "PASS" if not artifact_issues.get("craft_review") and not critical_findings and review.get("independence") in ("INDEPENDENT_CONTEXT", "SEPARATE_AGENT") else "FAIL"
+    repairs = artifact_values.get("repair_ledger") or {}
+    stages["REGRESSION_VERIFIED"] = "PASS" if not artifact_issues.get("repair_ledger") and all(item.get("regression_scenario") for item in repairs.get("repairs", []) if isinstance(item, dict)) else "FAIL"
+    applicable = [status for status in stages.values()]
+    computed_verdict = "DELIVERY_READY" if all(status == "PASS" for status in applicable) else "INCOMPLETE"
+    return {"status": "READY_FOR_REVIEW" if not check.issues else "INCOMPLETE", "computed_stages": stages, "computed_verdict": computed_verdict, "issues": check.issues, "scope": "Stages and verdict are computed from child artifact content; receipt claims are ignored."}
 
 
 def plan(project: Path, brief: str = "") -> dict:
@@ -649,6 +698,10 @@ def main() -> int:
             result = {"status": "UNAVAILABLE", "command": args.command, "reason": "Use the browser adapter and independent review input; no execution or reviewer evidence was supplied"}
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 1
+        if args.command == "status" and args.input:
+            result = v3_verify(read_json(args.input), args.project)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0 if result.get("computed_verdict") == "DELIVERY_READY" else 1
         if args.command in ("provenance-check", "dependency-check", "repair-status", "status"):
             result = {"status": "INCOMPLETE", "command": args.command, "reason": "v3 receipt index or input artifact is required"}
             print(json.dumps(result, ensure_ascii=False, indent=2))

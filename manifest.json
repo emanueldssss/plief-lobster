@@ -1,7 +1,7 @@
 {
   "name": "Pli'ef Lobster",
   "slug": "plief-lobster",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Coordinates reference acquisition, Sifr/Orun integration and closed-loop browser, evidence and craft verification.",
   "entry": "SKILL.md",
   "license": "Apache-2.0",

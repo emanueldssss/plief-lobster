@@ -1,5 +1,9 @@
 # Changes
 
+## 3.1.0
+
+Remove receipt authority from v3 stage claims. verify-v3 now validates child artifact content, derives stages and verdict, rejects empty artifacts, requires runtime attestation fields, and distinguishes `DELIVERY_READY` as a computed verdict. Scenario schema is closed to a finite action/assertion protocol; browser-runner v2 interprets matrix steps without arbitrary JavaScript.
+
 ## 3.0.0
 
 Add P0 closed-loop foundations: auto-profile and plan routing, v3 staged truth levels, scenario/evidence/provenance schemas, browser adapter with honest UNAVAILABLE state, dependency fingerprint adapter, runtime inspection, owner-bound receipt index and domain references for interaction/responsive/runtime proof. v2 remains readable.

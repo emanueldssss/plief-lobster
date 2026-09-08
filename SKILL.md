@@ -12,6 +12,10 @@ Substantial work uses the closed verification loop: auto-profile the surface, ru
 
 Use `profile` and `plan` before loading every domain reference. Use `verify-v3` for the indexed receipt. Browser adapters may return `UNAVAILABLE`; that is an incomplete execution gate, not a pass.
 
+## v3.1 proof authority
+
+Receipt `stages` and `verdict` are cache/output only. The verifier ignores them and computes stages from validated child artifact content. `DELIVERY_READY` is a derived verdict, never an input stage. Empty or hash-valid garbage artifacts fail semantic validation. Runtime evidence must contain runner attestation, scenario results and current fingerprints. Scenario matrices are a closed protocol of typed actions/assertions; they cannot contain arbitrary JavaScript.
+
 **Do not begin from invention when high-quality precedent, primitives, components, motion systems, shaders, models, typography systems, or design-system references can be inspected first. Research is part of implementation.**
 
 **For substantial frontend work, external visual and component research is expected, not exceptional.**
