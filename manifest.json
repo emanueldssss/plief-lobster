@@ -1,0 +1,47 @@
+{
+  "name": "Pli'ef Lobster",
+  "slug": "plief-lobster",
+  "version": "2.0.0",
+  "description": "Coordinates active reference acquisition, Sifr/Orun integration and independent visual, motion, 3D, scroll, material and typography craft review.",
+  "entry": "SKILL.md",
+  "license": "Apache-2.0",
+  "artifacts": {
+    "produced": [
+      ".plif/artifacts/<surface-id>/discovery.json",
+      ".plif/artifacts/<surface-id>/lobster-receipt.json",
+      ".plif/artifacts/<surface-id>/reference-search.json"
+    ],
+    "consumed": [
+      ".plif/artifacts/<surface-id>/experience-ir.json",
+      ".plif/artifacts/<surface-id>/design-dna.json",
+      ".plif/artifacts/<surface-id>/selection-record.json"
+    ]
+  },
+  "companions": [
+    "plief-sifr",
+    "plief-orun"
+  ],
+  "scripts": [
+    "scripts/lobster.py"
+  ],
+  "eval_cases": [
+    "evals/cases/lobster-cases.json"
+  ],
+  "upstream": {
+    "url": "https://github.com/pbakaus/impeccable",
+    "revision": "831cabee8b4bc1a2b66e5ae22003e9a19b57d464",
+    "notice": "NOTICE.md"
+  },
+  "contracts": {
+    "research": "lobster-research/v1",
+    "receipt": "lobster-receipt/v2",
+    "legacy_receipt": "lobster-receipt/v1 (integrity only)"
+  },
+  "commands": [
+    "discover",
+    "verify",
+    "research",
+    "research-verify",
+    "craft-check"
+  ]
+}

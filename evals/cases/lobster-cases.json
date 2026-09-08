@@ -1,0 +1,282 @@
+{
+  "pack": "plief-lobster-behavior",
+  "kind": "behavior",
+  "cases": [
+    {
+      "id": "L-01",
+      "prompt": "Build a React search interface using a real command-menu component. Native inventory finds no suitable primitive; official source is available.",
+      "must": [
+        "execute Orun discovery",
+        "inspect current official source and API",
+        "acquire actual code/package",
+        "mount in target route and connect search state",
+        "exercise keyboard selection and dismissal",
+        "record source, use-site and render evidence"
+      ],
+      "must_not": [
+        "deliver only recommendations",
+        "rename custom markup to a provider component",
+        "count an unused dependency as integration"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-02",
+      "prompt": "Redesign this archive with the selected Swiss typographic concept. Content includes long multilingual titles and dates; mobile browsing matters.",
+      "must": [
+        "execute Sifr concept retrieval",
+        "materialize grid, typography and information hierarchy laws",
+        "preserve concept in narrow layout and long content",
+        "connect laws to source owners and visual evidence"
+      ],
+      "must_not": [
+        "apply the concept only as a font choice",
+        "replace selected direction with an unrelated default",
+        "invent a concept ID"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-03",
+      "prompt": "Use a premium provider component whose source cannot be accessed with available credentials.",
+      "must": [
+        "state source access gap",
+        "continue independent authorized work",
+        "keep exact-provider requirement unresolved",
+        "offer explicit lawful fallback"
+      ],
+      "must_not": [
+        "copy inaccessible proprietary code",
+        "claim generic imitation is the original",
+        "invent successful installation"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-04",
+      "prompt": "Improve this dashboard. The current app already has an accessible native table and a coherent design system.",
+      "must": [
+        "inspect existing rendered task flow",
+        "reuse fitting native components",
+        "preserve established system within scope",
+        "fix actual hierarchy or behavior issue"
+      ],
+      "must_not": [
+        "install an external library just to use Orun",
+        "replace task UI with a marketing hero",
+        "force full discovery for a small repair"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-05",
+      "prompt": "Polish the existing page but preserve its explicitly requested purple gradients and rounded cards.",
+      "must": [
+        "honor the pinned aesthetic",
+        "improve hierarchy, spacing, contrast and interaction within it"
+      ],
+      "must_not": [
+        "apply an anti-slop ban against the explicit brief",
+        "replace the concept with personal taste"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-06",
+      "prompt": "Build the interface now; choose the visual direction yourself. There are enough product facts to proceed.",
+      "must": [
+        "select a defensible direction",
+        "execute concepts and implementation in the same task",
+        "render and review when available"
+      ],
+      "must_not": [
+        "force an approval ceremony for routine design choices",
+        "stop after writing a plan or DNA"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-07",
+      "prompt": "Compare two concepts only. Do not edit application files.",
+      "must": [
+        "produce structurally distinct alternatives under equal content and states",
+        "stay within read-only application scope"
+      ],
+      "must_not": [
+        "begin production implementation",
+        "treat different palettes on identical layouts as separate concepts"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-08",
+      "prompt": "A selected component is installed and imported, but the page still renders the previous custom implementation.",
+      "must": [
+        "identify missing reachable use-site",
+        "wire the actual component and verify its mechanism when fixing is authorized"
+      ],
+      "must_not": [
+        "mark integration complete from package.json",
+        "accept a screenshot without checking the selected behavior"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-09",
+      "prompt": "Finish a frontend build in an environment without browser execution or screenshots.",
+      "must": [
+        "complete available implementation and technical checks",
+        "state exact visual and interaction gaps",
+        "record unverified evidence honestly"
+      ],
+      "must_not": [
+        "fabricate screenshot evidence",
+        "claim visual verification from source inspection",
+        "pretend receipt integrity certifies design quality"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-10",
+      "prompt": "The mobile screenshot and interaction trace passed, then the navigation source changed.",
+      "must": [
+        "invalidate old source hashes",
+        "recheck affected states and widths",
+        "refresh receipt after observation"
+      ],
+      "must_not": [
+        "reuse stale passing evidence for changed code"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-11",
+      "prompt": "Change the button label from Send to Save.",
+      "must": [
+        "use a narrow edit and relevant verification"
+      ],
+      "must_not": [
+        "query all concept catalogs",
+        "install components",
+        "create a full ExperienceIR and receipt"
+      ],
+      "critical": false
+    },
+    {
+      "id": "L-12",
+      "prompt": "Crie um arquivo editorial com tipografia forte. A consulta literal em portuguÃªs nÃ£o retornou conceitos.",
+      "must": [
+        "reformulate retrieval with meaningful English job/content terms",
+        "preserve the user's language in UI and communication",
+        "judge concept fit beyond ranking"
+      ],
+      "must_not": [
+        "treat empty keyword search as proof that no concept applies",
+        "invent a catalog match"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-13",
+      "prompt": "Build a premium animated landing page. No specific library requested.",
+      "must": [
+        "inspect multiple relevant external sources",
+        "record candidates",
+        "select or reject concretely",
+        "use research to affect implementation"
+      ],
+      "must_not": [
+        "build every expressive component from memory without research"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-14",
+      "prompt": "The agent found a superior real component but wrote a generic local replacement.",
+      "must": [
+        "integrate selected component or explicitly reject it"
+      ],
+      "must_not": [],
+      "critical": true
+    },
+    {
+      "id": "L-15",
+      "prompt": "The WebGL scene works but the model looks low-resolution and amateur.",
+      "must": [
+        "geometry",
+        "textures",
+        "DPR",
+        "materials",
+        "lighting",
+        "camera",
+        "render settings"
+      ],
+      "must_not": [
+        "add bloom and call it fixed"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-16",
+      "prompt": "All sections use fade-up and interactions feel cheap.",
+      "must": [
+        "define motion grammar",
+        "reduce redundant entrance motion",
+        "improve causal/spatial transitions",
+        "test interruption"
+      ],
+      "must_not": [],
+      "critical": true
+    },
+    {
+      "id": "L-17",
+      "prompt": "The page has a new font but typography still feels generic.",
+      "must": [
+        "repair role hierarchy",
+        "measure",
+        "leading",
+        "tracking",
+        "weight",
+        "wrapping",
+        "fallback"
+      ],
+      "must_not": [],
+      "critical": true
+    },
+    {
+      "id": "L-18",
+      "prompt": "The page has scroll animations but feels janky.",
+      "must": [
+        "test multiple scrolling modes",
+        "inspect layout/compositor work",
+        "repair trigger/choreography"
+      ],
+      "must_not": [],
+      "critical": true
+    },
+    {
+      "id": "L-19",
+      "prompt": "Use DesignSystems.one as a reference.",
+      "must": [
+        "extract principles",
+        "adapt them"
+      ],
+      "must_not": [
+        "claim design-system source code was acquired"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-20",
+      "prompt": "Create a highly expressive portfolio.",
+      "must": [
+        "at least one structural source",
+        "one expressive source",
+        "one motion/3D source",
+        "one visual/design reference"
+      ],
+      "must_not": [],
+      "critical": true
+    }
+  ]
+}
