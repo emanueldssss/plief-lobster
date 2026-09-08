@@ -206,3 +206,8 @@ brand animation
 ```
 
 Não transformar seleção de library em religião.
+
+
+## Before selecting an engine
+
+Run [Platform Capability Scout](platform-capability-scout.md): inspect View Transitions and CSS scroll-driven animations for the exact mechanism and browser targets before defaulting to a package. Choose native, hybrid or library on observed fit, with a tested fallback.

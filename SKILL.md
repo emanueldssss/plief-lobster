@@ -36,6 +36,8 @@ Read [the execution contract](references/execution.md) for new surfaces, redesig
 
 ## Craft routing
 
+After native inventory, run the [Platform Capability Scout](references/platform-capability-scout.md) for substantial work and proposed motion/scroll/positioning dependencies. Compare current browser APIs with project mechanisms and libraries before acquiring. Check exact subfeatures, browser targets, support evidence, cost and fallback; choose native, hybrid or library with a concrete reason. Native browser geometry does not replace accessible interaction semantics. Attach platform-scout.json to the receipt and run verify with `--require-platform` for applicable work.
+
 For substantial work read [research-contract](references/research-contract.md) and [reference-fabric](references/reference-fabric.md). Inspect at least three relevant external sources, retain candidate decisions, and make selected references change implementation. Visually important work spans structural, expressive, motion/3D and visual/design-system sources. Local copy/spacing repairs keep the narrow route.
 
 Read [typography-craft](references/typography-craft.md) for role/face selection or type repair; [motion-craft](references/motion-craft.md) for animations and transitions; [scroll-craft](references/scroll-craft.md) for scroll changes; [3d-craft](references/3d-craft.md) for 3D/WebGL; [material-craft](references/material-craft.md) for glass, blur and effects. Load only applicable domains.

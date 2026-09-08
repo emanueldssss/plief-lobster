@@ -3,7 +3,7 @@
 [![skills.sh](https://skills.sh/b/emanueldssss/plief-lobster)](https://skills.sh/emanueldssss/plief-lobster)
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-green)
-![Version](https://img.shields.io/badge/version-2.0.0-orange)
+![Version](https://img.shields.io/badge/version-2.1.0-orange)
 
 **Agent skill that turns "vibe-coded UI" into researched, acquired, craft-reviewed frontend.**
 
@@ -66,7 +66,7 @@ python scripts/lobster.py <command>            # or: lobster <command>
 | `research` | Creates an unverified research draft that the host fills with real searches. Intentionally incomplete until filled. Refuses overwrite. |
 | `research-verify` | Validates the research record: breadth, diversity, impact linkage, no unsafe paths / credential URLs, no waived research. |
 | `craft-check` | Validates the independent craft scorecard: five gates, evidence per dimension, no still-frame passing as motion evidence. |
-| `verify` | Validates the delivery receipt: required records, existing files, **SHA-256 integrity**, project-relative paths, no traversal. |
+| `verify` | Validates the delivery receipt: required records, existing files, **SHA-256 integrity**, project-relative paths, no traversal. `--require-platform` additionally demands the Platform Capability Scout record. |
 
 ```bash
 # Example: validate a delivery receipt
@@ -85,7 +85,14 @@ Exit codes: `0` ready · `1` incomplete · `2` inspection error.
 6. **Independent craft review** — implementation, integration, visual, motion, 3D scored 0–5 with evidence; any central gate ≤2 blocks shipping.
 7. **Receipt v2** — CLI-verified integrity. `READY_FOR_REVIEW` = document integrity, not a shipping verdict.
 
-## What's new in v2
+## What's new in v2.1 — Platform Capability Scout
+
+- **Scout before dependencies.** For motion, scroll and layout capabilities, the agent compares **native browser APIs, hybrid approaches, and libraries per subfeature** — recording exact browser targets, support inspection, cost, accessibility, and an *exercised* fallback (no still-frame pretending to be temporal evidence).
+- **`verify --require-platform`** — enforcement flag: applicable new work must carry a platform record. Attached platform evidence is always validated, flag or not; older v2 receipts remain readable.
+- **L-21–24** behavioral cases + 7 platform regression tests (55 total).
+- Fixed a UTF-8/Windows decoding corruption in eval case L-12.
+
+### What was new in v2
 
 - **Mandatory retained research** — receipt v2 rejects waived research for substantial work
 - **Reference acquisition contracts** — Open Props, VibePrompt, ReUI, DesignSystems.one, 21st.dev, shadcn registries, Aceternity, Magic UI, React Bits, headless primitives
@@ -93,9 +100,8 @@ Exit codes: `0` ready · `1` incomplete · `2` inspection error.
 - **Anti-amnesia** — every component has a destiny and impact; no orphan references
 - **Temporal evidence gates** — still frames can't pass motion; screenshots can't pass 3D
 - **New commands** — `research`, `research-verify`, `craft-check`
-- **48 tests** passing (47 + 1 integration skip without siblings)
 
-Full validation report: [`docs/VALIDACAO-V2.md`](docs/VALIDACAO-V2.md)
+Full validation reports: [`docs/VALIDACAO-V2.1.md`](docs/VALIDACAO-V2.1.md) · [`docs/VALIDACAO-V2.md`](docs/VALIDACAO-V2.md)
 
 ## Companions (optional)
 
@@ -111,7 +117,7 @@ Drop them as sibling folders for local discovery; missing companions are reporte
 ## Development
 
 ```bash
-python -m unittest discover -s tests -v   # 48 cases
+python -m unittest discover -s tests -v   # 55 cases
 ```
 
 The v1 receipt format remains readable for legacy validation, but substantial builds require v2 gates. Migration guide: [`references/research-contract.md`](references/research-contract.md).

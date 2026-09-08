@@ -71,3 +71,8 @@ failure fallback
 Não adicionar page transition só porque parece sofisticado.
 
 Quando shared-element transition fizer sentido, pesquisar View Transitions / Motion layoutId / outra solução adequada antes de recriar manualmente.
+
+
+## Before selecting an engine
+
+Run [Platform Capability Scout](platform-capability-scout.md): inspect View Transitions and CSS scroll-driven animations for the exact mechanism and browser targets before defaulting to a package. Choose native, hybrid or library on observed fit, with a tested fallback.
