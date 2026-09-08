@@ -46,8 +46,13 @@ Every name in a row inherits its categories and mode. Search the name and task, 
 
 Prefer headless primitives for behavior and project-compatible open code for deep visual adaptation. Structural layer owns forms, menus, dialogs, tabs, lists, tables, navigation, state, focus and keyboard. Expressive sources own motion, 3D, shader, hero, special type and effects; they must preserve structural behavior.
 
-Search ladder: native project → headless primitive → compatible open-code component → specialized interaction → expressive component → custom. A strong native component can remain the winner after comparison.
+Search ladder: native project → platform capability scout → headless primitive → compatible open-code component → specialized interaction → expressive component → custom. A strong native component can remain the winner after comparison.
 
 Favor inspectable markdown docs, llms.txt, registry JSON, MCP, CLI or metadata when available. Verify these endpoints instead of guessing them. Social feeds, GitHub trending, Reddit and Product Hunt are discovery leads, never final provenance.
 
 If the current catalog lacks a strong fit, search the current web for newer high-quality libraries, registries, primitives, design systems, interaction references, or tools. Check quality, license, source availability, stack, maintenance and API. No blind trending-library adoption.
+
+
+## Platform capability decision
+
+Before choosing motion, scroll or positioning dependencies, read [platform-capability-scout.md](platform-capability-scout.md). Inspect current browser mechanisms, exact target support and fallback. Record native/hybrid/library choice with cost and behavioral reasons. The platform survey complements visual research; it does not count as acquired component provenance. New applicable deliveries attach platform_scout to receipt v2 and run verify with --require-platform.

@@ -7,6 +7,7 @@ Exit: 0 usable/ready for review, 1 incomplete/no matches, 2 inspection error.
 from __future__ import annotations
 
 import argparse
+from datetime import date
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
@@ -437,16 +438,61 @@ def craft_check(receipt, project):
     return check.result()
 
 
-def verify(receipt, project: Path) -> dict:
+def platform_check(receipt, project):
+    check = RecordCheck(project)
+    if not check.require(isinstance(receipt, dict), "platform: receipt object required"):
+        return check.result()
+    path = check.file(receipt.get("platform_scout"), "platform_scout")
+    if not path:
+        return check.result()
+    record = read_json(path)
+    if not check.require(isinstance(record, dict), "platform: object required"):
+        return check.result()
+    check.require(record.get("schema") == "lobster-platform/v1", "platform: unsupported schema")
+    check.strings(record.get("target_browsers"), "platform.target_browsers")
+    try:
+        checked = record.get("checked_at")
+        check.require(isinstance(checked, str) and date.fromisoformat(checked).isoformat() == checked, "platform: ISO checked_at required")
+    except ValueError:
+        check.require(False, "platform: ISO checked_at required")
+    evidence = {row["id"]: row for row in receipt.get("evidence", []) if isinstance(row, dict) and nonempty(row.get("id"))} if isinstance(receipt.get("evidence"), list) else {}
+    seen = set()
+    for row in check.rows(record.get("decisions"), "platform.decisions"):
+        check.fields(row, "capability native_option library_option reason support_observation feature_detection fallback accessibility cost_comparison".split(), "platform decision")
+        name = row.get("capability")
+        if nonempty(name):
+            check.require(name not in seen, "platform: duplicate capability")
+            seen.add(name)
+        check.require(row.get("choice") in ("native", "hybrid", "library"), "platform: explicit native/hybrid/library choice required")
+        for url in check.strings(row.get("support_urls"), "platform.support_urls"):
+            check.require(web_url(url), "platform: invalid support URL")
+        check.file(row.get("support_evidence"), "platform.support_evidence")
+        owner = check.file(row.get("implementation"), "platform.implementation")
+        for field in ("evidence_ids", "fallback_evidence_ids"):
+            for identity in check.strings(row.get(field), f"platform.{field}"):
+                item = evidence.get(identity, {})
+                check.require(item.get("status") == "passed" and item.get("kind") in (("interaction",) if field == "fallback_evidence_ids" else ("visual", "interaction")), f"platform.{field}: current observation required")
+                check.file(item.get("artifact"), f"platform.{field}.artifact")
+                owners = {path for subject in check.rows(item.get("subject_files"), f"platform.{field}.subjects") if (path := check.file(subject, f"platform.{field}.subject"))}
+                check.require(owner is not None and owner in owners, f"platform.{field}: owner proof required")
+    return check.result()
+
+
+def verify(receipt, project: Path, require_platform=False) -> dict:
     if not isinstance(receipt, dict) or receipt.get("format") != "lobster-receipt/v2":
         result = verify_implementation(receipt, project)
         result["contract"] = "legacy-v1; does not satisfy v2 substantial-work gates"
+        if require_platform:
+            result["issues"].append("platform: receipt v2 required")
+            result["status"] = "INCOMPLETE"
         return result
     legacy = dict(receipt, format="lobster-receipt/v1")
     result = verify_implementation(legacy, project)
     check = RecordCheck(project)
     check.issues.extend(result["issues"])
     check.issues.extend(craft_check(receipt, project)["issues"])
+    if require_platform or "platform_scout" in receipt:
+        check.issues.extend(platform_check(receipt, project)["issues"])
     summary = receipt.get("research")
     profile = receipt.get("profile", {})
     if not isinstance(profile, dict):
@@ -493,6 +539,7 @@ def main() -> int:
     check = commands.add_parser("verify")
     check.add_argument("receipt", type=Path)
     check.add_argument("--project", type=Path, required=True)
+    check.add_argument("--require-platform", action="store_true")
     draft = commands.add_parser("research", help="Create an unverified research record; host performs searches")
     draft.add_argument("--need", required=True)
     draft.add_argument("--framework", default="")
@@ -533,7 +580,7 @@ def main() -> int:
         elif args.command == "craft-check":
             result = craft_check(record, args.project)
         else:
-            result = verify(record, args.project)
+            result = verify(record, args.project, args.require_platform)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["status"] == "READY_FOR_REVIEW" else 1
     except (OSError, ValueError, TypeError) as exc:

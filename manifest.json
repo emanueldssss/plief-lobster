@@ -1,7 +1,7 @@
 {
   "name": "Pli'ef Lobster",
   "slug": "plief-lobster",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Coordinates active reference acquisition, Sifr/Orun integration and independent visual, motion, 3D, scroll, material and typography craft review.",
   "entry": "SKILL.md",
   "license": "Apache-2.0",
@@ -9,7 +9,8 @@
     "produced": [
       ".plif/artifacts/<surface-id>/discovery.json",
       ".plif/artifacts/<surface-id>/lobster-receipt.json",
-      ".plif/artifacts/<surface-id>/reference-search.json"
+      ".plif/artifacts/<surface-id>/reference-search.json",
+      ".plif/artifacts/<surface-id>/platform-scout.json"
     ],
     "consumed": [
       ".plif/artifacts/<surface-id>/experience-ir.json",
@@ -35,7 +36,8 @@
   "contracts": {
     "research": "lobster-research/v1",
     "receipt": "lobster-receipt/v2",
-    "legacy_receipt": "lobster-receipt/v1 (integrity only)"
+    "legacy_receipt": "lobster-receipt/v1 (integrity only)",
+    "platform": "lobster-platform/v1"
   },
   "commands": [
     "discover",

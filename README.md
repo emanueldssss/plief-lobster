@@ -2,6 +2,8 @@
 
 Frontend orchestration with retained research and independent craft review.
 
+Version 2.1 adds [Platform Capability Scout](references/platform-capability-scout.md) before dependency selection. Applicable new work attaches browser-support, native/hybrid/library decisions and exercised fallback evidence, then runs `verify --require-platform`. Plain verify still reads earlier receipts and validates any Scout attached.
+
 Load SKILL.md through your skill host. Keep plief-sifr and plief-orun as sibling folders for local discovery; this ZIP does not bundle them. Missing companions are reported as ERROR by discover. Python 3.10+ is required for the standard-library CLI; web/browser/MCP capabilities belong to the host.
 
 From this folder run `python scripts/lobster.py --help` for commands. Use [research-contract](references/research-contract.md) for draft, verification, schema and migration instructions. The draft is intentionally incomplete until real research is recorded. Local tests: `python -m unittest discover -s tests -v`. The sibling integration case skips explicitly when those separate packages are unavailable.

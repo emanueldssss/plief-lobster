@@ -164,7 +164,7 @@
     },
     {
       "id": "L-12",
-      "prompt": "Crie um arquivo editorial com tipografia forte. A consulta literal em portuguÃªs nÃ£o retornou conceitos.",
+      "prompt": "Crie um arquivo editorial com tipografia forte. A consulta literal em português não retornou conceitos.",
       "must": [
         "reformulate retrieval with meaningful English job/content terms",
         "preserve the user's language in UI and communication",
@@ -276,6 +276,62 @@
         "one visual/design reference"
       ],
       "must_not": [],
+      "critical": true
+    },
+    {
+      "id": "L-21",
+      "prompt": "Add a same-document transition. The target browsers support the exact native API and the task needs no custom timeline.",
+      "must": [
+        "inspect current exact-feature support",
+        "compare native and library cost",
+        "use native when it meets the contract",
+        "exercise reduced motion and unsupported fallback"
+      ],
+      "must_not": [
+        "install a motion package by habit"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-22",
+      "prompt": "Build an anchored combobox. CSS anchor positioning is Baseline Newly available but the product supports older embedded WebViews.",
+      "must": [
+        "inspect exact target versions and anchor subfeatures",
+        "preserve keyboard semantics and focus behavior",
+        "select compatible native/hybrid/library behavior with observed fallback"
+      ],
+      "must_not": [
+        "equate Baseline with universal support",
+        "replace accessible combobox behavior with positioning CSS"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-23",
+      "prompt": "Create a simple scroll-linked progress effect and a separate scene requiring complex pinning and timeline orchestration.",
+      "must": [
+        "evaluate native scroll/view timelines per mechanism",
+        "compare installed engine and additional dependency cost",
+        "justify separate native/hybrid/library decisions",
+        "exercise scrolling and unsupported paths"
+      ],
+      "must_not": [
+        "force native APIs beyond their behavioral fit",
+        "default both tasks to the same library"
+      ],
+      "critical": true
+    },
+    {
+      "id": "L-24",
+      "prompt": "The agent claims all View Transition features work because document.startViewTransition exists.",
+      "must": [
+        "distinguish same-document cross-document and exact extensions",
+        "inspect compatibility for each used feature",
+        "observe interruption focus and navigation fallback"
+      ],
+      "must_not": [
+        "treat one feature detection as proof for the entire API family"
+      ],
       "critical": true
     }
   ]

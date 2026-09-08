@@ -65,10 +65,15 @@ The CLI returns exit 0 / `READY_FOR_REVIEW` when the record is complete and inte
 
 ## v2 execution pipeline
 
-FRAME → NATIVE INVENTORY → CONCEPT RETRIEVAL → REFERENCE DISCOVERY → DESIGN SYSTEM / PRECEDENT REVIEW → COMPONENT / ASSET SEARCH → DIRECTION → CRAFT CONTRACT → VERTICAL SLICE → MOTION / 3D PASS → RESPONSIVE PASS → CRAFT REVIEW → COMPONENT REPLACEMENT CHECK → RENDER MATRIX → REPAIR → DELIVERY RECEIPT.
+FRAME → NATIVE INVENTORY → PLATFORM CAPABILITY SCOUT → CONCEPT RETRIEVAL → REFERENCE DISCOVERY → DESIGN SYSTEM / PRECEDENT REVIEW → COMPONENT / ASSET SEARCH → DIRECTION → CRAFT CONTRACT → VERTICAL SLICE → MOTION / 3D PASS → RESPONSIVE PASS → CRAFT REVIEW → COMPONENT REPLACEMENT CHECK → RENDER MATRIX → REPAIR → DELIVERY RECEIPT.
 
 The stage table above defines ownership; this sequence defines the v2 handoffs. Use [research-contract.md](research-contract.md) for v2 records and commands. Keep Sifr/Orun authority, native-first inventory, real-source acquisition, use-site proof, hashes and access-limit honesty. Search is mandatory for substantial work and the listed expressive triggers, including when native code exists: assess whether it meets the visual goal and compare relevant external precedent before deciding.
 
 Normalize acquired tokens, radii, spacing, type, icon language, motion durations/easing/springs/stagger, responsive behavior, content, state, accessibility and theme. Preserve the defining source mechanism. Source acquisition is not permission to ship its unmodified demo defaults.
 
 The delivery-receipt section above describes the preserved v1 core. New substantial work uses lobster-receipt/v2 and all applicable research/craft extensions. A legacy READY_FOR_REVIEW only reports legacy record integrity.
+
+
+## Platform capability decision
+
+Before choosing motion, scroll or positioning dependencies, read [platform-capability-scout.md](platform-capability-scout.md). Inspect current browser mechanisms, exact target support and fallback. Record native/hybrid/library choice with cost and behavioral reasons. The platform survey complements visual research; it does not count as acquired component provenance. New applicable deliveries attach platform_scout to receipt v2 and run verify with --require-platform.
