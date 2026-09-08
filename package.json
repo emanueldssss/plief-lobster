@@ -1,0 +1,60 @@
+{
+  "name": "plief-lobster",
+  "version": "2.0.0",
+  "description": "Coordinates active reference acquisition, Sifr/Orun integration and independent visual, motion, 3D, scroll, material and typography craft review.",
+  "license": "Apache-2.0",
+  "author": "emanueldssss",
+  "homepage": "https://github.com/emanueldssss/plief-lobster#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emanueldssss/plief-lobster.git"
+  },
+  "bugs": {
+    "url": "https://github.com/emanueldssss/plief-lobster/issues"
+  },
+  "keywords": [
+    "agent-skills",
+    "skills.sh",
+    "claude-code",
+    "codex",
+    "cursor",
+    "opencode",
+    "gemini-cli",
+    "github-copilot",
+    "frontend",
+    "ui",
+    "ux",
+    "design-system",
+    "react",
+    "motion",
+    "scroll",
+    "typography",
+    "3d",
+    "webgl",
+    "shadcn",
+    "craft-review"
+  ],
+  "files": [
+    "SKILL.md",
+    "manifest.json",
+    "references/",
+    "scripts/",
+    "evals/",
+    "bin/",
+    "LICENSE",
+    "NOTICE.md",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "bin": {
+    "lobster": "./bin/lobster.js"
+  },
+  "engines": {
+    "node": ">=18",
+    "python": ">=3.10"
+  },
+  "scripts": {
+    "test": "python -m unittest discover -s tests -v",
+    "validate": "python scripts/lobster.py --help"
+  }
+}
