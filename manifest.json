@@ -39,7 +39,9 @@
     "schemas/evidence-manifest-v3.json",
     "schemas/visual-review-v1.json",
     "schemas/provenance-lock-v1.json",
-    "schemas/lobster-receipt-v3.json"
+    "schemas/lobster-receipt-v3.json",
+    "schemas/dependency-graph-v2.json",
+    "schemas/runtime-v2.json"
   ],
   "upstream": {
     "url": "https://github.com/pbakaus/impeccable",

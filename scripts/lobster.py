@@ -528,7 +528,8 @@ def verify(receipt, project: Path, require_platform=False) -> dict:
     return check.result()
 
 
-V3_STAGES = ("RECORD_VALID", "SOURCE_VERIFIED", "IMPLEMENTATION_VERIFIED", "EXECUTION_VERIFIED", "CRAFT_REVIEWED", "DELIVERY_READY")
+V3_STAGES = ("RECORD_VALID", "SOURCE_VERIFIED", "IMPLEMENTATION_VERIFIED", "EXECUTION_VERIFIED", "CRAFT_REVIEWED", "REGRESSION_VERIFIED")
+V3_VERDICTS = ("DELIVERY_READY", "INCOMPLETE", "BLOCKED")
 
 
 def auto_profile(project: Path, brief: str = "") -> dict:
@@ -574,7 +575,7 @@ def load_and_validate_artifact(reference, project, kind):
         "provenance_lock": ("schema", "components"),
         "dependency_graph": ("schema", "entries", "nodes", "edges", "confidence", "fingerprint"),
         "scenario_matrix": ("schema", "scenarios"),
-        "scenario_run": ("schema", "run_id", "runner", "runner_version", "scenario_hash", "project_fingerprint", "scenarios"),
+        "scenario_run": ("schema", "run_id", "runner", "runner_version", "browser_engine", "browser_version", "started_at", "finished_at", "scenario_hash", "project_revision", "project_fingerprint", "dependency_fingerprint", "scenarios"),
         "craft_review": ("schema", "independence", "findings"),
         "repair_ledger": ("schema", "repairs"),
         "verdict": ("schema", "status", "stages"),
@@ -602,6 +603,66 @@ def load_and_validate_artifact(reference, project, kind):
     return value, check.issues
 
 
+def stage_result(stage, status, proofs=None, findings=None):
+    return {"stage": stage, "status": status, "proofs": proofs or [], "findings": findings or []}
+
+
+def verify_record(receipt, artifact_issues):
+    findings = [{"code": issue.split(":", 1)[0], "severity": "BLOCKING", "message": issue} for issue in artifact_issues]
+    return stage_result("RECORD_VALID", "PASS" if not findings else "FAIL", findings=findings)
+
+
+def verify_source(values, issues):
+    findings = [{"code": issue.split(":", 1)[0], "severity": "BLOCKING", "message": issue} for issue in issues]
+    proofs = ["provenance_lock", "research", "platform_scout"] if not findings else []
+    return stage_result("SOURCE_VERIFIED", "PASS" if not findings else "FAIL", proofs=proofs, findings=findings)
+
+
+def verify_implementation_stage(values, issues):
+    findings = [{"code": issue.split(":", 1)[0], "severity": "BLOCKING", "message": issue} for issue in issues]
+    return stage_result("IMPLEMENTATION_VERIFIED", "PASS" if not findings else "FAIL", proofs=["dependency_graph"] if not findings else [], findings=findings)
+
+
+def verify_execution(values, issues):
+    run = values.get("scenario_run") or {}
+    findings = [{"code": issue.split(":", 1)[0], "severity": "BLOCKING", "message": issue} for issue in issues]
+    scenarios = run.get("scenarios", [])
+    if not scenarios:
+        findings.append({"code": "LOBSTER_EXEC_SCENARIO_MISSING", "severity": "BLOCKING", "message": "No runtime scenarios were produced by the runner"})
+    if any(item.get("status") != "PASS" for item in scenarios if isinstance(item, dict)):
+        findings.append({"code": "LOBSTER_EXEC_SCENARIO_FAILED", "severity": "BLOCKING", "message": "At least one executed scenario failed"})
+    return stage_result("EXECUTION_VERIFIED", "PASS" if not findings else "FAIL", proofs=[item.get("id") for item in scenarios if isinstance(item, dict) and item.get("status") == "PASS"], findings=findings)
+
+
+def verify_craft(values, issues):
+    review = values.get("craft_review") or {}
+    findings = [{"code": issue.split(":", 1)[0], "severity": "BLOCKING", "message": issue} for issue in issues]
+    findings.extend(item for item in review.get("findings", []) if isinstance(item, dict) and item.get("severity") in ("CRITICAL", "MAJOR"))
+    independent = review.get("independence") in ("INDEPENDENT_CONTEXT", "SEPARATE_AGENT")
+    if not independent:
+        findings.append({"code": "LOBSTER_REVIEW_INDEPENDENCE_INVALID", "severity": "BLOCKING", "message": "Strong craft assurance requires an independent context or separate agent"})
+    return stage_result("CRAFT_REVIEWED", "PASS" if not findings else "FAIL", proofs=["craft_review"] if not findings else [], findings=findings)
+
+
+def verify_regression(values, issues):
+    ledger = values.get("repair_ledger") or {}
+    findings = [{"code": issue.split(":", 1)[0], "severity": "BLOCKING", "message": issue} for issue in issues]
+    repairs = ledger.get("repairs", [])
+    if not repairs:
+        return stage_result("REGRESSION_VERIFIED", "N/A", findings=findings)
+    for repair in repairs:
+        if not isinstance(repair, dict) or not repair.get("before_evidence") or not repair.get("after_evidence") or not repair.get("regression_scenarios"):
+            findings.append({"code": "LOBSTER_REPAIR_INCOMPLETE", "severity": "BLOCKING", "message": "Repair requires before/after evidence and regression scenarios"})
+    return stage_result("REGRESSION_VERIFIED", "PASS" if not findings else "FAIL", proofs=["repair_ledger"] if not findings else [], findings=findings)
+
+
+def compute_verdict(results):
+    statuses = [item["status"] for item in results]
+    if any(status == "FAIL" for status in statuses):
+        return "INCOMPLETE"
+    return "DELIVERY_READY"
+
+
 def v3_verify(receipt, project: Path) -> dict:
     check = RecordCheck(project)
     if not check.require(isinstance(receipt, dict) and receipt.get("format") == "lobster-receipt/v3", "receipt: lobster-receipt/v3 required"):
@@ -614,23 +675,37 @@ def v3_verify(receipt, project: Path) -> dict:
         check.issues.append("LOBSTER_STAGE_CLAIM_IGNORED_INVALID")
     artifact_values = {}
     artifact_issues = {}
-    for field in ("profile", "research", "platform_scout", "provenance_lock", "dependency_graph", "scenario_run", "craft_review", "repair_ledger"):
+    for field in ("profile", "research", "platform_scout", "provenance_lock", "dependency_graph", "scenario_matrix", "scenario_run", "evidence_manifest", "craft_review", "repair_ledger"):
         value, issues = load_and_validate_artifact(receipt.get(field), project, field)
         artifact_values[field], artifact_issues[field] = value, issues
         check.issues.extend(issues)
-    stages = {"RECORD_VALID": "PASS" if not artifact_issues.get("profile") else "FAIL"}
-    stages["SOURCE_VERIFIED"] = "PASS" if not artifact_issues.get("research") and not artifact_issues.get("platform_scout") and not artifact_issues.get("provenance_lock") else "FAIL"
-    stages["IMPLEMENTATION_VERIFIED"] = "PASS" if not artifact_issues.get("dependency_graph") and not artifact_issues.get("provenance_lock") else "FAIL"
+    # Cross-artifact truth: run must point at the current matrix and dependency graph.
     run = artifact_values.get("scenario_run") or {}
-    stages["EXECUTION_VERIFIED"] = "PASS" if not artifact_issues.get("scenario_run") and all(item.get("status") == "PASS" for item in run.get("scenarios", [])) else "FAIL"
-    review = artifact_values.get("craft_review") or {}
-    critical_findings = [item for item in review.get("findings", []) if isinstance(item, dict) and item.get("severity") in ("CRITICAL", "MAJOR")]
-    stages["CRAFT_REVIEWED"] = "PASS" if not artifact_issues.get("craft_review") and not critical_findings and review.get("independence") in ("INDEPENDENT_CONTEXT", "SEPARATE_AGENT") else "FAIL"
-    repairs = artifact_values.get("repair_ledger") or {}
-    stages["REGRESSION_VERIFIED"] = "PASS" if not artifact_issues.get("repair_ledger") and all(item.get("regression_scenario") for item in repairs.get("repairs", []) if isinstance(item, dict)) else "FAIL"
-    applicable = [status for status in stages.values()]
-    computed_verdict = "DELIVERY_READY" if all(status == "PASS" for status in applicable) else "INCOMPLETE"
-    return {"status": "READY_FOR_REVIEW" if not check.issues else "INCOMPLETE", "computed_stages": stages, "computed_verdict": computed_verdict, "issues": check.issues, "scope": "Stages and verdict are computed from child artifact content; receipt claims are ignored."}
+    matrix = artifact_values.get("scenario_matrix") or {}
+    graph = artifact_values.get("dependency_graph") or {}
+    if run and matrix and run.get("scenario_hash") != matrix.get("hash"):
+        check.issues.append("LOBSTER_SCENARIO_HASH_STALE")
+    if run and graph and run.get("dependency_fingerprint") != graph.get("fingerprint"):
+        check.issues.append("LOBSTER_DEPENDENCY_FINGERPRINT_STALE")
+    evidence = artifact_values.get("evidence_manifest") or {}
+    evidence_rows = evidence.get("evidence", []) if isinstance(evidence, dict) else []
+    owners = {node.get("path") for node in graph.get("nodes", []) if isinstance(node, dict)}
+    for row in evidence_rows:
+        if isinstance(row, dict):
+            if row.get("scenario_hash") != run.get("scenario_hash") or row.get("dependency_fingerprint") != graph.get("fingerprint"):
+                check.issues.append(f"LOBSTER_EVIDENCE_STALE:{row.get('evidence_id', row.get('id', 'unknown'))}")
+            for owner in row.get("owners", []):
+                if owner not in owners:
+                    check.issues.append(f"LOBSTER_EVIDENCE_OWNER_OUTSIDE_CLOSURE:{owner}")
+    results = [verify_record(receipt, artifact_issues.get("profile", [])),
+               verify_source(artifact_values, artifact_issues.get("research", []) + artifact_issues.get("platform_scout", []) + artifact_issues.get("provenance_lock", [])),
+               verify_implementation_stage(artifact_values, artifact_issues.get("dependency_graph", []) + artifact_issues.get("provenance_lock", [])),
+               verify_execution(artifact_values, artifact_issues.get("scenario_run", []) + artifact_issues.get("scenario_matrix", []) + check.issues),
+               verify_craft(artifact_values, artifact_issues.get("craft_review", [])),
+               verify_regression(artifact_values, artifact_issues.get("repair_ledger", []))]
+    computed_stages = {item["stage"]: item["status"] for item in results}
+    computed_verdict = compute_verdict(results)
+    return {"status": "READY_FOR_REVIEW" if not check.issues else "INCOMPLETE", "computed_stages": computed_stages, "stage_results": results, "computed_verdict": computed_verdict, "issues": check.issues, "scope": "Stages and verdict are computed from child artifact content; receipt claims are ignored."}
 
 
 def plan(project: Path, brief: str = "") -> dict:
@@ -675,6 +750,10 @@ def main() -> int:
         command = commands.add_parser(name)
         command.add_argument("--project", type=Path, required=True)
         command.add_argument("--input", type=Path)
+        command.add_argument("--base-url")
+        command.add_argument("--matrix", type=Path)
+        command.add_argument("--out", type=Path)
+        command.add_argument("--dependency-graph", type=Path)
     args = parser.parse_args()
     try:
         if args.command == "research":
@@ -695,9 +774,18 @@ def main() -> int:
             print(json.dumps({"status": "READY", "profile": profile, "next": "Record exact platform support and fallback in platform-scout.json"}, ensure_ascii=False, indent=2))
             return 0
         if args.command in ("run", "inspect", "review"):
-            result = {"status": "UNAVAILABLE", "command": args.command, "reason": "Use the browser adapter and independent review input; no execution or reviewer evidence was supplied"}
+            if args.base_url and args.matrix and args.out:
+                runner = ROOT / "scripts" / "browser-runner.mjs"
+                command = ["node", str(runner), "--project", str(args.project), "--base-url", args.base_url, "--matrix", str(args.matrix), "--out", str(args.out)]
+                if args.dependency_graph:
+                    command.extend(["--dependency-graph", str(args.dependency_graph)])
+                return subprocess.run(command, check=False).returncode
+            result = {"status": "UNAVAILABLE", "command": args.command, "reason": "base URL, scenario matrix, and output path are required for execution"}
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 1
+        if args.command == "dependency-check" and args.input and args.out:
+            graph = ROOT / "scripts" / "dependency-graph.mjs"
+            return subprocess.run(["node", str(graph), str(args.project), str(args.input), str(args.out)], check=False).returncode
         if args.command == "status" and args.input:
             result = v3_verify(read_json(args.input), args.project)
             print(json.dumps(result, ensure_ascii=False, indent=2))

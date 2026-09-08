@@ -56,6 +56,16 @@ class V3Tests(unittest.TestCase):
         result = test_lobster.lobster.v3_verify(receipt, self.root)
         self.assertEqual(result["status"], "INCOMPLETE")
 
+    def test_cross_artifact_hash_mismatch_blocks_execution(self):
+        run = self.root / "run.json"
+        matrix = self.root / "matrix.json"
+        run.write_text(json.dumps({"schema": "lobster-runtime/v2", "status": "PASS", "scenario_hash": "wrong", "project_fingerprint": "p", "dependency_fingerprint": "d", "scenarios": []}), encoding="utf-8")
+        matrix.write_text(json.dumps({"schema": "lobster-scenario-matrix/v1", "scenarios": [{"id": "smoke", "viewport": {"width": 800, "height": 600}, "steps": [{"action": "goto", "url": "/"}], "assertions": [{"assert": "url", "value": "http://example.test/"}]}]}), encoding="utf-8")
+        receipt = {"format": "lobster-receipt/v3", "surface": "x", "revision": "r", "scenario_matrix": {"path": matrix.name, "sha256": __import__('hashlib').sha256(matrix.read_bytes()).hexdigest()}, "scenario_run": {"path": run.name, "sha256": __import__('hashlib').sha256(run.read_bytes()).hexdigest()}}
+        result = test_lobster.lobster.v3_verify(receipt, self.root)
+        self.assertEqual(result["computed_verdict"], "INCOMPLETE")
+        self.assertTrue(any("SCENARIO_HASH" in issue for issue in result["issues"]))
+
 
 if __name__ == "__main__":
     unittest.main()
