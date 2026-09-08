@@ -528,6 +528,67 @@ def verify(receipt, project: Path, require_platform=False) -> dict:
     return check.result()
 
 
+V3_STAGES = ("RECORD_VALID", "SOURCE_VERIFIED", "IMPLEMENTATION_VERIFIED", "EXECUTION_VERIFIED", "CRAFT_REVIEWED", "DELIVERY_READY")
+
+
+def auto_profile(project: Path, brief: str = "") -> dict:
+    root = Path(project).resolve(strict=True)
+    source_suffixes = {".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".vue", ".svelte", ".html", ".py"}
+    files = [path for path in root.rglob("*") if path.is_file() and path.suffix.lower() in source_suffixes and ".git" not in path.parts and "node_modules" not in path.parts]
+    names = " ".join(path.name.lower() for path in files)
+    text = (brief + " " + names).lower()
+    categories = {
+        "substantial": len(files) >= 8 or any(word in text for word in ("landing", "dashboard", "redesign", "app", "page")),
+        "expressive": any(word in text for word in ("premium", "cinematic", "shader", "hero", "portfolio", "showcase")),
+        "motion": any(word in text for word in ("motion", "animation", "transition", "scroll", "parallax", "gsap", "framer")),
+        "3d": any(word in text for word in ("webgl", "three", "r3f", "gltf", "3d")),
+        "forms": any(word in text for word in ("form", "input", "login", "settings")),
+        "dense_data": any(word in text for word in ("table", "dashboard", "analytics", "grid", "data")),
+        "interactive": any(word in text for word in ("button", "menu", "dialog", "modal", "command", "interactive")),
+        "responsive": any(word in text for word in ("mobile", "responsive", "viewport", "breakpoint")),
+    }
+    if categories["substantial"]:
+        categories["responsive"] = True
+    required = ["research", "platform_scout", "browser_execution", "scenario_matrix", "craft_review"] if categories["substantial"] else ["technical_check"]
+    if categories["dense_data"]: required.append("data_interface_craft")
+    if categories["forms"]: required.append("form_craft")
+    if categories["interactive"]: required.append("interaction_craft")
+    return {"schema": "lobster-surface-profile/v1", "source": "auto", "project": str(root), "signals": categories, "required_gates": sorted(set(required)), "not_applicable": [name for name, enabled in (("3d", categories["3d"]), ("motion", categories["motion"])) if not enabled]}
+
+
+def v3_verify(receipt, project: Path) -> dict:
+    check = RecordCheck(project)
+    if not check.require(isinstance(receipt, dict) and receipt.get("format") == "lobster-receipt/v3", "receipt: lobster-receipt/v3 required"):
+        return check.result()
+    for field in ("surface", "revision"):
+        check.fields(receipt, [field], "receipt")
+    stages = receipt.get("stages")
+    if check.require(isinstance(stages, dict), "stages: object required"):
+        for stage in V3_STAGES:
+            value = stages.get(stage)
+            check.require(value in ("PASS", "FAIL", "N/A"), f"stages.{stage}: PASS, FAIL or N/A required")
+        for stage in V3_STAGES[1:]:
+            if stages.get(stage) == "PASS":
+                previous = V3_STAGES[V3_STAGES.index(stage) - 1]
+                check.require(stages.get(previous) in ("PASS", "N/A"), f"stages.{stage}: previous stage {previous} is not closed")
+    for field in ("profile", "research", "platform_scout", "provenance_lock", "dependency_graph", "scenario_run", "craft_review", "repair_ledger", "verdict"):
+        check.file(receipt.get(field), f"receipt.{field}")
+    verdict = receipt.get("verdict")
+    if isinstance(verdict, dict) and "path" in verdict:
+        verdict_path = check.file(verdict, "receipt.verdict")
+        verdict = read_json(verdict_path) if verdict_path else {}
+    if verdict and isinstance(verdict, dict):
+        check.require(verdict.get("status") in ("DELIVERY_READY", "INCOMPLETE"), "verdict.status: invalid")
+        if verdict.get("status") == "DELIVERY_READY":
+            check.require(all(receipt.get("stages", {}).get(stage) in ("PASS", "N/A") for stage in V3_STAGES), "DELIVERY_READY requires every applicable stage closed")
+    return check.result()
+
+
+def plan(project: Path, brief: str = "") -> dict:
+    profile = auto_profile(project, brief)
+    return {"surface": Path(project).name, "class": "substantial frontend" if profile["signals"]["substantial"] else "scoped frontend edit", "required": profile["required_gates"], "optional": ["motion_craft"] if not profile["signals"]["motion"] else [], "not_applicable": profile["not_applicable"], "profile": profile}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -551,6 +612,20 @@ def main() -> int:
         command.add_argument("--project", type=Path, required=True)
         if name == "research-verify":
             command.add_argument("--expressive", action="store_true")
+    for name in ("profile", "plan"):
+        command = commands.add_parser(name)
+        command.add_argument("--project", type=Path, required=True)
+        command.add_argument("--brief", default="")
+    v3 = commands.add_parser("verify-v3")
+    v3.add_argument("receipt", type=Path)
+    v3.add_argument("--project", type=Path, required=True)
+    scout = commands.add_parser("scout")
+    scout.add_argument("--project", type=Path, required=True)
+    scout.add_argument("--brief", default="")
+    for name in ("run", "inspect", "review", "provenance-check", "dependency-check", "repair-status", "status"):
+        command = commands.add_parser(name)
+        command.add_argument("--project", type=Path, required=True)
+        command.add_argument("--input", type=Path)
     args = parser.parse_args()
     try:
         if args.command == "research":
@@ -560,6 +635,24 @@ def main() -> int:
                 output.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
             print(json.dumps({"status": "DRAFT", "output": str(args.out.resolve()), "research_performed": False}))
             return 0
+        if args.command == "profile":
+            print(json.dumps(auto_profile(args.project, args.brief), ensure_ascii=False, indent=2))
+            return 0
+        if args.command == "plan":
+            print(json.dumps(plan(args.project, args.brief), ensure_ascii=False, indent=2))
+            return 0
+        if args.command == "scout":
+            profile = auto_profile(args.project, args.brief)
+            print(json.dumps({"status": "READY", "profile": profile, "next": "Record exact platform support and fallback in platform-scout.json"}, ensure_ascii=False, indent=2))
+            return 0
+        if args.command in ("run", "inspect", "review"):
+            result = {"status": "UNAVAILABLE", "command": args.command, "reason": "Use the browser adapter and independent review input; no execution or reviewer evidence was supplied"}
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 1
+        if args.command in ("provenance-check", "dependency-check", "repair-status", "status"):
+            result = {"status": "INCOMPLETE", "command": args.command, "reason": "v3 receipt index or input artifact is required"}
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 1
         if args.command == "discover":
             if not (args.concept and args.concept.strip() or args.capability and args.capability.strip()):
                 parser.error("discover requires a nonempty --concept or --capability")
@@ -575,7 +668,9 @@ def main() -> int:
             statuses = [r["status"] for r in result["results"].values()]
             return 2 if "ERROR" in statuses else 1 if "NO_MATCH" in statuses else 0
         record = read_json(args.receipt)
-        if args.command == "research-verify":
+        if args.command == "verify-v3":
+            result = v3_verify(record, args.project)
+        elif args.command == "research-verify":
             result = research_verify(record, args.project, args.expressive)
         elif args.command == "craft-check":
             result = craft_check(record, args.project)

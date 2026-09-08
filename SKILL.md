@@ -6,6 +6,12 @@ license: Apache-2.0
 
 # Pli'ef Lobster v2 — Hypercraft & Reference Acquisition
 
+## v3 closed loop
+
+Substantial work uses the closed verification loop: auto-profile the surface, run the platform scout, create a scenario matrix, execute a real browser adapter, inspect runtime mechanics, bind evidence to owners and dependency fingerprints, run a blind craft review, repair by root cause, rerun impacted scenarios, and issue a staged v3 verdict. A written receipt cannot claim execution truth. Read [runtime-proof](references/runtime-proof.md), [interaction-craft](references/interaction-craft.md), and [responsive-craft](references/responsive-craft.md) when routed by the profile.
+
+Use `profile` and `plan` before loading every domain reference. Use `verify-v3` for the indexed receipt. Browser adapters may return `UNAVAILABLE`; that is an incomplete execution gate, not a pass.
+
 **Do not begin from invention when high-quality precedent, primitives, components, motion systems, shaders, models, typography systems, or design-system references can be inspected first. Research is part of implementation.**
 
 **For substantial frontend work, external visual and component research is expected, not exceptional.**
@@ -33,6 +39,8 @@ For substantive frontend work, load Sifr and its routed modules. If a companion 
 | Local copy, spacing, or defect fix | Inspect owner → narrow edit → relevant check; do not create a full artifact set or browse component galleries |
 
 Read [the execution contract](references/execution.md) for new surfaces, redesigns, and component integration. Read [the craft review](references/craft-review.md) immediately before implementation and during visual review. Maintenance tests live in [behavioral cases](evals/cases/lobster-cases.json); do not preload them during UI work.
+
+Domain routing: dense data → data-interface-craft; forms → form-craft; navigation → navigation-craft; editor → editor-craft; charts/maps → visualization-craft; media/image hero → media-craft; accessibility-critical interaction → accessibility-craft; substantial responsive work → responsive-craft; interactive UI → interaction-craft. Load only applicable modules.
 
 ## Craft routing
 

@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Lobster visual review v1","type":"object","required":["schema","independence","findings"],"properties":{"schema":{"const":"lobster-visual-review/v1"},"independence":{"type":"string"},"findings":{"type":"array"}},"additionalProperties":true}

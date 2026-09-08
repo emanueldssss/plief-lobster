@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Lobster intent v1","type":"object","required":["brief"],"properties":{"brief":{"type":"string","minLength":1},"route":{"type":"string"},"constraints":{"type":"array","items":{"type":"string"}}},"additionalProperties":true}

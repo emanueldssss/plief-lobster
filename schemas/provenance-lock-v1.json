@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Lobster provenance lock v1","type":"object","required":["schema","components"],"properties":{"schema":{"const":"lobster-provenance/v1"},"components":{"type":"array","items":{"type":"object","required":["id","source","license","revision","runtime_owner"]}}},"additionalProperties":true}

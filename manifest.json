@@ -1,8 +1,8 @@
 {
   "name": "Pli'ef Lobster",
   "slug": "plief-lobster",
-  "version": "2.1.0",
-  "description": "Coordinates active reference acquisition, Sifr/Orun integration and independent visual, motion, 3D, scroll, material and typography craft review.",
+  "version": "3.0.0",
+  "description": "Coordinates reference acquisition, Sifr/Orun integration and closed-loop browser, evidence and craft verification.",
   "entry": "SKILL.md",
   "license": "Apache-2.0",
   "artifacts": {
@@ -10,7 +10,8 @@
       ".plif/artifacts/<surface-id>/discovery.json",
       ".plif/artifacts/<surface-id>/lobster-receipt.json",
       ".plif/artifacts/<surface-id>/reference-search.json",
-      ".plif/artifacts/<surface-id>/platform-scout.json"
+    ".plif/artifacts/<surface-id>/platform-scout.json"
+    ,".plif/surfaces/<surface-id>/profile.json"
     ],
     "consumed": [
       ".plif/artifacts/<surface-id>/experience-ir.json",
@@ -23,10 +24,22 @@
     "plief-orun"
   ],
   "scripts": [
-    "scripts/lobster.py"
+    "scripts/lobster.py",
+    "scripts/browser-runner.mjs",
+    "scripts/dependency-graph.mjs",
+    "scripts/inspect-runtime.mjs"
   ],
   "eval_cases": [
     "evals/cases/lobster-cases.json"
+  ],
+  "schemas": [
+    "schemas/intent-v1.json",
+    "schemas/surface-profile-v1.json",
+    "schemas/scenario-matrix-v1.json",
+    "schemas/evidence-manifest-v3.json",
+    "schemas/visual-review-v1.json",
+    "schemas/provenance-lock-v1.json",
+    "schemas/lobster-receipt-v3.json"
   ],
   "upstream": {
     "url": "https://github.com/pbakaus/impeccable",
@@ -38,12 +51,26 @@
     "receipt": "lobster-receipt/v2",
     "legacy_receipt": "lobster-receipt/v1 (integrity only)",
     "platform": "lobster-platform/v1"
+    ,"receipt_v3": "lobster-receipt/v3",
+    "runtime": "lobster-runtime/v1",
+    "evidence": "lobster-evidence/v3"
   },
   "commands": [
     "discover",
     "verify",
     "research",
     "research-verify",
-    "craft-check"
+    "craft-check",
+    "profile",
+    "scout",
+    "plan",
+    "run",
+    "inspect",
+    "review",
+    "provenance-check",
+    "dependency-check",
+    "verify-v3",
+    "repair-status",
+    "status"
   ]
 }

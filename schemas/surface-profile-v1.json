@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Lobster surface profile v1","type":"object","required":["schema","source","signals","required_gates"],"properties":{"schema":{"const":"lobster-surface-profile/v1"},"source":{"const":"auto"},"signals":{"type":"object"},"required_gates":{"type":"array","items":{"type":"string"}}},"additionalProperties":true}

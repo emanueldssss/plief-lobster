@@ -1,6 +1,8 @@
-# Pli'ef Lobster v2
+# Pli'ef Lobster v3
 
 Frontend orchestration with retained research and independent craft review.
+
+Version 3 adds a closed verification loop: automatic surface profile, scenario planning, browser/runtime adapters, dependency fingerprints, owner-bound evidence and staged delivery truth. It refuses to upgrade a written claim into execution proof.
 
 Version 2.1 adds [Platform Capability Scout](references/platform-capability-scout.md) before dependency selection. Applicable new work attaches browser-support, native/hybrid/library decisions and exercised fallback evidence, then runs `verify --require-platform`. Plain verify still reads earlier receipts and validates any Scout attached.
 

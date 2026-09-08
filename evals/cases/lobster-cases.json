@@ -333,6 +333,30 @@
         "treat one feature detection as proof for the entire API family"
       ],
       "critical": true
-    }
+    },
+    {"id":"L-25","prompt":"Receipt claims browser passed without a browser run.","must":["fail execution verification"],"must_not":["trust artifact text"],"critical":true},
+    {"id":"L-26","prompt":"Transitive token import changes after screenshot.","must":["invalidate dependency evidence"],"must_not":["reuse stale screenshot"],"critical":true},
+    {"id":"L-27","prompt":"Animated landing marks substantial false.","must":["auto profile requires gates"],"must_not":["trust self classification"],"critical":true},
+    {"id":"L-28","prompt":"Complex UI has one desktop screenshot.","must":["report incomplete coverage"],"must_not":["pass responsive gate"],"critical":true},
+    {"id":"L-29","prompt":"Typography proof covers unrelated owner.","must":["fail owner binding"],"must_not":[],"critical":true},
+    {"id":"L-30","prompt":"Fallback is described but never forced.","must":["fail fallback gate"],"must_not":[],"critical":true},
+    {"id":"L-31","prompt":"Screenshot looks correct but console has runtime error.","must":["block execution verdict"],"must_not":[],"critical":true},
+    {"id":"L-32","prompt":"Dialog closes but focus is lost.","must":["block interaction/accessibility"],"must_not":[],"critical":true},
+    {"id":"L-33","prompt":"Global radius changes but only target route is checked.","must":["detect blast radius"],"must_not":[],"critical":true},
+    {"id":"L-34","prompt":"Three references produce no observable delta.","must":["fail reference impact"],"must_not":[],"critical":true},
+    {"id":"L-35","prompt":"Components retain incompatible demo tokens.","must":["report coherence finding"],"must_not":[],"critical":true},
+    {"id":"L-36","prompt":"Desktop sidebar compresses and breaks mobile.","must":["report responsive topology major"],"must_not":[],"critical":true},
+    {"id":"L-37","prompt":"Loading jumps layout and button double submits.","must":["fail state craft"],"must_not":[],"critical":true},
+    {"id":"L-38","prompt":"Interrupted transition leaves intermediate transform.","must":["fail motion timeline"],"must_not":[],"critical":true},
+    {"id":"L-39","prompt":"Reduced motion changes 800ms to 700ms.","must":["fail reduced motion"],"must_not":[],"critical":true},
+    {"id":"L-40","prompt":"Hero adds 400KB beyond budget.","must":["fail performance budget"],"must_not":[],"critical":true},
+    {"id":"L-41","prompt":"800px asset renders at 2000px retina.","must":["report asset fidelity"],"must_not":[],"critical":true},
+    {"id":"L-42","prompt":"Long real title breaks card.","must":["run content stress"],"must_not":[],"critical":true},
+    {"id":"L-43","prompt":"Scout says modern browsers.","must":["fail target matrix"],"must_not":[],"critical":true},
+    {"id":"L-44","prompt":"Package metadata and source license conflict.","must":["block provenance"],"must_not":[],"critical":true},
+    {"id":"L-45","prompt":"All candidates violate a critical requirement.","must":["allow justified custom implementation"],"must_not":["force acquisition"],"critical":true},
+    {"id":"L-46","prompt":"Native platform solves behavior at lower cost.","must":["allow native selection"],"must_not":["install library by habit"],"critical":true},
+    {"id":"L-47","prompt":"Brief intentionally requests brutalism.","must":["preserve intentional direction"],"must_not":["repair by personal taste"],"critical":true},
+    {"id":"L-48","prompt":"Mobile repair breaks desktop.","must":["regression matrix catches it"],"must_not":["declare fixed from one viewport"],"critical":true}
   ]
 }

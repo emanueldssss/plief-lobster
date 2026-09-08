@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Lobster evidence manifest v3","type":"object","required":["schema","evidence"],"properties":{"schema":{"const":"lobster-evidence/v3"},"evidence":{"type":"array","items":{"type":"object","required":["id","artifact","sha256","scenario","owners","dependency_fingerprint"]}}},"additionalProperties":true}
