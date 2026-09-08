@@ -1,0 +1,63 @@
+{
+  "name": "plief-lobster",
+  "version": "3.1.0",
+  "description": "Coordinates frontend reference acquisition and closed-loop proof verification with physical evidence authority.",
+  "license": "Apache-2.0",
+  "author": "emanueldssss",
+  "homepage": "https://github.com/emanueldssss/plief-lobster#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emanueldssss/plief-lobster.git"
+  },
+  "bugs": {
+    "url": "https://github.com/emanueldssss/plief-lobster/issues"
+  },
+  "keywords": [
+    "agent-skills",
+    "skills.sh",
+    "claude-code",
+    "codex",
+    "cursor",
+    "opencode",
+    "gemini-cli",
+    "github-copilot",
+    "frontend",
+    "ui",
+    "ux",
+    "design-system",
+    "react",
+    "motion",
+    "scroll",
+    "typography",
+    "3d",
+    "webgl",
+    "shadcn",
+    "craft-review"
+  ],
+  "files": [
+    "SKILL.md",
+    "manifest.json",
+    "references/",
+    "scripts/",
+    "schemas/",
+    "evals/",
+    "tests/",
+    "bin/",
+    "LICENSE",
+    "NOTICE.md",
+    "README.md",
+    "CHANGELOG.md",
+    "MapSource.md"
+  ],
+  "bin": {
+    "lobster": "bin/lobster.js"
+  },
+  "engines": {
+    "node": ">=18",
+    "python": ">=3.10"
+  },
+  "scripts": {
+    "test": "python -m unittest discover -s tests -v",
+    "validate": "python scripts/lobster.py --help"
+  }
+}
