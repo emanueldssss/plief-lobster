@@ -1,0 +1,154 @@
+{
+  "schema": "lobster-runtime/v2",
+  "status": "PASS",
+  "target": "http://127.0.0.1:4176",
+  "runner": "lobster-browser",
+  "runner_version": "3.1.0",
+  "browser_engine": "chromium",
+  "browser_version": "153.0.8010.12",
+  "run_id": "RUN-1788907790386",
+  "started_at": "2026-09-08T22:49:50.386Z",
+  "finished_at": "2026-09-08T22:49:50.386Z",
+  "project_revision": "9e70799017f2ea9b96b0d6276da42408997405cf",
+  "scenario_hash": "63e7893cd9fca5d4bfc97b8e65adc1cdd9b2c0991c6892d583488d12e156be8c",
+  "project_fingerprint": "d827f63826c4549978a2dd9bbfcebf54f18e4628bf7145815dc5b16f5ba0c72d",
+  "dependency_fingerprint": "914612956f3a1f3faff7cd008d873ee1c311655f5f25cde89bb677a993b28c5f",
+  "runtime_errors": [],
+  "network_errors": [],
+  "scenarios": [
+    {
+      "id": "mobile-overflow-and-runtime",
+      "status": "PASS",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "steps": [
+        {
+          "action": "goto",
+          "url": "/"
+        },
+        {
+          "action": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/final/mobile.png"
+        }
+      ],
+      "assertions": [
+        {
+          "assert": "noHorizontalOverflow",
+          "status": "PASS",
+          "expected": true,
+          "actual": true
+        },
+        {
+          "assert": "noConsoleErrors",
+          "status": "PASS",
+          "expected": true,
+          "actual": true
+        },
+        {
+          "assert": "noFailedRequests",
+          "status": "PASS",
+          "expected": true,
+          "actual": true
+        }
+      ],
+      "failures": [],
+      "console_errors": [],
+      "page_errors": [],
+      "runtime_errors": [],
+      "network_errors": [],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/final/mobile.png",
+          "sha256": "5176e2f5772053d8701c2739209620afb0c1f6daef59d44fe20056fbe685c587"
+        }
+      ],
+      "started_at": "2026-09-08T22:49:50.092Z",
+      "finished_at": "2026-09-08T22:49:50.169Z"
+    },
+    {
+      "id": "dialog-focus-restoration",
+      "status": "PASS",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "steps": [
+        {
+          "action": "goto",
+          "url": "/"
+        },
+        {
+          "action": "click",
+          "locator": {
+            "css": "#open"
+          }
+        },
+        {
+          "action": "click",
+          "locator": {
+            "css": "#close"
+          }
+        },
+        {
+          "action": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/final/dialog.png"
+        }
+      ],
+      "assertions": [
+        {
+          "assert": "focused",
+          "status": "PASS",
+          "expected": true,
+          "actual": true
+        }
+      ],
+      "failures": [],
+      "console_errors": [],
+      "page_errors": [],
+      "runtime_errors": [],
+      "network_errors": [],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/final/dialog.png",
+          "sha256": "818bf5cf294b6f8d8516926434bf50f367183371a62f09101677e586e6fd0af4"
+        }
+      ],
+      "started_at": "2026-09-08T22:49:50.169Z",
+      "finished_at": "2026-09-08T22:49:50.344Z"
+    },
+    {
+      "id": "forced-motion-fallback",
+      "status": "PASS",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "steps": [
+        {
+          "action": "goto",
+          "url": "/?fallback=1"
+        }
+      ],
+      "assertions": [
+        {
+          "assert": "text",
+          "status": "PASS",
+          "expected": "Fallback motion path",
+          "actual": "Fallback motion path"
+        }
+      ],
+      "failures": [],
+      "console_errors": [],
+      "page_errors": [],
+      "runtime_errors": [],
+      "network_errors": [],
+      "artifacts": [],
+      "started_at": "2026-09-08T22:49:50.344Z",
+      "finished_at": "2026-09-08T22:49:50.386Z"
+    }
+  ]
+}

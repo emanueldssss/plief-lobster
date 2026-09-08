@@ -1,0 +1,39 @@
+{
+  "schema": "lobster-research/v1",
+  "need": "dashboard proof",
+  "queries": [
+    "dashboard proof"
+  ],
+  "sources": [
+    {
+      "name": "native browser",
+      "url": "https://example.test",
+      "category": [
+        "PRIMITIVE"
+      ],
+      "mode": "BOTH",
+      "access": "official",
+      "inspected": true,
+      "observation": "native APIs"
+    }
+  ],
+  "candidates": [
+    {
+      "name": "native",
+      "source": "native",
+      "url": "https://example.test/native",
+      "mechanism": "native",
+      "interaction_mechanism": "keyboard",
+      "framework": "plain",
+      "stack_fit": "yes",
+      "license": "MIT",
+      "dependencies": [],
+      "bundle_implications": "none",
+      "accessibility": "keyboard",
+      "adaptation_cost": "none",
+      "status": "reference",
+      "reason": "native sufficient"
+    }
+  ],
+  "implementation_impacts": []
+}

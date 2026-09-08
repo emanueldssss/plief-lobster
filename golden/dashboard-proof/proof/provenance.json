@@ -1,0 +1,12 @@
+{
+  "schema": "lobster-provenance/v1",
+  "components": [
+    {
+      "id": "native-dashboard",
+      "source": "local",
+      "license": "MIT",
+      "revision": "9e70799",
+      "runtime_owner": "app.js"
+    }
+  ]
+}

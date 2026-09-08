@@ -1,0 +1,92 @@
+{
+  "schema": "lobster-scenario-matrix/v1",
+  "scenarios": [
+    {
+      "id": "mobile-overflow-and-runtime",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "steps": [
+        {
+          "action": "goto",
+          "url": "/"
+        },
+        {
+          "action": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/baseline/mobile.png"
+        }
+      ],
+      "assertions": [
+        {
+          "assert": "noHorizontalOverflow"
+        },
+        {
+          "assert": "noConsoleErrors"
+        },
+        {
+          "assert": "noFailedRequests"
+        }
+      ]
+    },
+    {
+      "id": "dialog-focus-restoration",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "steps": [
+        {
+          "action": "goto",
+          "url": "/"
+        },
+        {
+          "action": "click",
+          "locator": {
+            "css": "#open"
+          }
+        },
+        {
+          "action": "click",
+          "locator": {
+            "css": "#close"
+          }
+        },
+        {
+          "action": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/baseline/dialog.png"
+        }
+      ],
+      "assertions": [
+        {
+          "assert": "focused",
+          "locator": {
+            "css": "#open"
+          }
+        }
+      ]
+    },
+    {
+      "id": "forced-motion-fallback",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "steps": [
+        {
+          "action": "goto",
+          "url": "/?fallback=1"
+        }
+      ],
+      "assertions": [
+        {
+          "assert": "text",
+          "locator": {
+            "css": "#motion-status"
+          },
+          "value": "Fallback motion path"
+        }
+      ]
+    }
+  ]
+}

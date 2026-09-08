@@ -1,0 +1,27 @@
+{
+  "schema": "lobster-repair-ledger/v1",
+  "repairs": [
+    {
+      "id": "golden-repair",
+      "symptom": "mobile overflow, runtime errors and focus loss",
+      "root_cause": "fixed-width card, deliberate error request and close handler focus target",
+      "owner": "styles.css/app.js",
+      "changed_files": [
+        "styles.css",
+        "app.js"
+      ],
+      "before_evidence": [
+        "baseline-mobile",
+        "baseline-dialog"
+      ],
+      "after_evidence": [
+        "final-mobile",
+        "final-dialog"
+      ],
+      "regression_scenarios": [
+        "mobile-overflow-and-runtime",
+        "dialog-focus-restoration"
+      ]
+    }
+  ]
+}

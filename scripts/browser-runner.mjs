@@ -15,7 +15,7 @@ if (!output || !target || !matrixPath) { console.error(JSON.stringify({status: "
 const sha256 = bytes => createHash("sha256").update(bytes).digest("hex");
 function treeFingerprint(root) {
   const files = [];
-  const walk = dir => { for (const name of readdirSync(dir)) { if (name === "node_modules" || name === ".git") continue; const path = join(dir, name); const stat = statSync(path); if (stat.isDirectory()) walk(path); else files.push([relative(root, path).replaceAll("\\", "/"), sha256(readFileSync(path))]); } };
+  const walk = dir => { for (const name of readdirSync(dir)) { if (name === "node_modules" || name === ".git" || name === "artifacts") continue; const path = join(dir, name); const stat = statSync(path); if (stat.isDirectory()) walk(path); else files.push([relative(root, path).replaceAll("\\", "/"), sha256(readFileSync(path))]); } };
   try { walk(root); } catch { return "unknown"; }
   return sha256(JSON.stringify(files.sort((a, b) => a[0].localeCompare(b[0]))));
 }

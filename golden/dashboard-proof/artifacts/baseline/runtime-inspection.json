@@ -1,0 +1,38 @@
+{
+  "schema": "lobster-runtime-inspection/v2",
+  "status": "FAIL",
+  "runtime_errors": [
+    "golden deliberate console defect",
+    "golden deliberate console defect",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "golden deliberate console defect",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "golden deliberate console defect",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "network_errors": [
+    {
+      "url": "http://127.0.0.1:4173/api/fail",
+      "status": 503
+    },
+    {
+      "url": "http://127.0.0.1:4173/api/fail",
+      "status": 503
+    },
+    {
+      "url": "http://127.0.0.1:4173/api/fail",
+      "status": 503
+    }
+  ],
+  "inspected_scenarios": [
+    "mobile-overflow-and-runtime",
+    "dialog-focus-restoration"
+  ],
+  "horizontal_overflow_scenarios": [
+    "mobile-overflow-and-runtime"
+  ],
+  "zero_sized_interactives": [],
+  "offscreen_interactives": [],
+  "scroll_lock_leaks": [],
+  "focus_loss": []
+}

@@ -1,0 +1,7 @@
+@import url('/tokens.css');
+body { margin: 0; font-family: sans-serif; color: #111827; }
+header { display:flex; justify-content:space-between; padding: var(--token-space); background:#eef2ff; }
+nav { display:flex; gap:16px; }
+main { padding: var(--token-space); }
+.wide-card { width: 100%; max-width: 100%; box-sizing: border-box; min-height: 160px; background:#dbeafe; padding: 20px; }
+dialog { border: 2px solid var(--token-accent); padding: 24px; }

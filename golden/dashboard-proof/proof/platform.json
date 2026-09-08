@@ -1,0 +1,20 @@
+{
+  "schema": "lobster-platform/v1",
+  "target_browsers": [
+    "chromium"
+  ],
+  "checked_at": "2026-09-08",
+  "decisions": [
+    {
+      "subfeature": "view-transitions",
+      "choice": "native",
+      "owner": "app.js",
+      "support": "supported",
+      "fallback": "none",
+      "accessibility": "preserved",
+      "maintenance_cost": "low",
+      "payload_cost": "none",
+      "source": "https://developer.mozilla.org/"
+    }
+  ]
+}

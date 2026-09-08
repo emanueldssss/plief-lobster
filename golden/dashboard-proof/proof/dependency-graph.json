@@ -1,0 +1,41 @@
+{
+  "schema": "lobster-dependency-graph/v2",
+  "project": ".",
+  "entries": [
+    "index.html"
+  ],
+  "nodes": [
+    {
+      "path": "app.js",
+      "sha256": "45bd057378b2c82ab0422a0994aa6928a8dc94134aca0e1e80939854a33761c7"
+    },
+    {
+      "path": "index.html",
+      "sha256": "65d46770f224c0cdad3c08a7e358d5630e40a1e4be102ae0d04c6f4c8340b86e"
+    },
+    {
+      "path": "styles.css",
+      "sha256": "fa6e44285d257464a536ee1b931d19102000fddf3b91de0dab0ca91ae4859ade"
+    },
+    {
+      "path": "tokens.css",
+      "sha256": "014207ccc77e8edd11e740f82eb6686ae0b52dd9a95744bb8f8b9eb30fa8023a"
+    }
+  ],
+  "edges": [
+    {
+      "from": "index.html",
+      "to": "app.js"
+    },
+    {
+      "from": "index.html",
+      "to": "styles.css"
+    },
+    {
+      "from": "styles.css",
+      "to": "tokens.css"
+    }
+  ],
+  "confidence": "FULL",
+  "fingerprint": "914612956f3a1f3faff7cd008d873ee1c311655f5f25cde89bb677a993b28c5f"
+}

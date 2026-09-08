@@ -1,0 +1,49 @@
+{
+  "schema": "lobster-golden-proof/v1",
+  "project": "dashboard-proof",
+  "baseline": {
+    "run": "artifacts/baseline/scenario-run.json",
+    "defects": [
+      "horizontal overflow",
+      "console error",
+      "failed request",
+      "dialog focus restoration"
+    ]
+  },
+  "final": {
+    "run": "artifacts/final/scenario-run.json",
+    "defects_detected": [
+      "mobile overflow",
+      "console/runtime error",
+      "failed request",
+      "focus loss"
+    ],
+    "defects_corrected": [
+      "fixed-width card",
+      "deliberate console error",
+      "failing request",
+      "dialog focus restoration"
+    ],
+    "new_regressions": [],
+    "scenarios": [
+      "mobile-overflow-and-runtime",
+      "dialog-focus-restoration",
+      "forced-motion-fallback"
+    ]
+  },
+  "stale_evidence": {
+    "mutation": "tokens.css changed after final run",
+    "verdict": "INCOMPLETE with LOBSTER_DEPENDENCY_CLOSURE_STALE",
+    "rerun_verdict": "DELIVERY_READY"
+  },
+  "proof_chain": [
+    "RECORD_VALID",
+    "SOURCE_VERIFIED",
+    "IMPLEMENTATION_VERIFIED",
+    "EXECUTION_VERIFIED",
+    "CRAFT_REVIEWED",
+    "REGRESSION_VERIFIED"
+  ],
+  "verdict": "DELIVERY_READY",
+  "authority": "computed by verify-v3"
+}

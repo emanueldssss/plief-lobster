@@ -1,0 +1,36 @@
+{
+  "schema": "lobster-evidence/v3",
+  "evidence": [
+    {
+      "evidence_id": "final-mobile",
+      "kind": "screenshot",
+      "runner": "lobster-browser",
+      "scenario_id": "mobile-overflow-and-runtime",
+      "path": "artifacts/final/mobile.png",
+      "sha256": "799114408a1b62c20c200a3161c01a4b89a6e2d85e540b9c9b677cce2932ad6e",
+      "scenario_hash": "63e7893cd9fca5d4bfc97b8e65adc1cdd9b2c0991c6892d583488d12e156be8c",
+      "dependency_fingerprint": "914612956f3a1f3faff7cd008d873ee1c311655f5f25cde89bb677a993b28c5f",
+      "project_fingerprint": "d827f63826c4549978a2dd9bbfcebf54f18e4628bf7145815dc5b16f5ba0c72d",
+      "owners": [
+        "index.html",
+        "styles.css",
+        "tokens.css"
+      ]
+    },
+    {
+      "evidence_id": "final-dialog",
+      "kind": "screenshot",
+      "runner": "lobster-browser",
+      "scenario_id": "dialog-focus-restoration",
+      "path": "artifacts/final/dialog.png",
+      "sha256": "91780c1e7a2f97587cf7f59bc7a98b7e531f83406f128daa4c0ffca8c3734d57",
+      "scenario_hash": "63e7893cd9fca5d4bfc97b8e65adc1cdd9b2c0991c6892d583488d12e156be8c",
+      "dependency_fingerprint": "914612956f3a1f3faff7cd008d873ee1c311655f5f25cde89bb677a993b28c5f",
+      "project_fingerprint": "d827f63826c4549978a2dd9bbfcebf54f18e4628bf7145815dc5b16f5ba0c72d",
+      "owners": [
+        "index.html",
+        "app.js"
+      ]
+    }
+  ]
+}

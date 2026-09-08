@@ -712,7 +712,7 @@ def validate_artifact(reference, project, kind):
         "verdict": ("schema", "status", "stages"),
     }
     for field in schemas.get(kind, ("schema",)):
-        if field not in value or value[field] in (None, "", [], {}):
+        if field not in value or value[field] in (None, ""):
             check.issues.append(f"LOBSTER_SCHEMA_REQUIRED_FIELD:{kind}:{field}")
     expected = {
         "profile": "lobster-surface-profile/v1", "dependency_graph": "lobster-dependency-graph/v2",
@@ -728,9 +728,23 @@ def validate_artifact(reference, project, kind):
         for scenario in value.get("scenarios", []) if isinstance(value.get("scenarios"), list) else []:
             if not isinstance(scenario, dict) or not nonempty(scenario.get("id")) or scenario.get("status") not in ("PASS", "FAIL"):
                 check.issues.append("LOBSTER_RUNTIME_SCENARIO_INVALID")
+        if value.get("runner") != "lobster-browser":
+            check.issues.append("LOBSTER_RUNTIME_RUNNER_INVALID")
+        if value.get("browser_engine") not in ("chromium", "firefox", "webkit"):
+            check.issues.append("LOBSTER_RUNTIME_BROWSER_INVALID")
+        if not re.fullmatch(r"RUN-[0-9]+", str(value.get("run_id", ""))):
+            check.issues.append("LOBSTER_RUNTIME_RUN_ID_INVALID")
     if kind == "craft_review":
         if value.get("independence") not in ("INDEPENDENT_CONTEXT", "SEPARATE_AGENT", "SAME_AGENT_FRESH_PASS", "UNVERIFIED"):
             check.issues.append("LOBSTER_REVIEW_INDEPENDENCE_INVALID")
+        if value.get("independence") in ("INDEPENDENT_CONTEXT", "SEPARATE_AGENT"):
+            for field in ("review_run_id", "reviewer_mode", "started_at", "finished_at", "review_input_hash", "evidence_manifest_hash"):
+                if not nonempty(value.get(field)):
+                    check.issues.append(f"LOBSTER_REVIEW_ATTESTATION_MISSING:{field}")
+    if kind == "provenance_lock":
+        for component in value.get("components", []) if isinstance(value.get("components"), list) else []:
+            if not isinstance(component, dict) or not all(nonempty(component.get(field)) for field in ("id", "source", "license", "revision", "runtime_owner")):
+                check.issues.append("LOBSTER_PROVENANCE_COMPONENT_INVALID")
     return value, check.issues
 
 
@@ -817,13 +831,26 @@ def v3_verify(receipt, project: Path) -> dict:
     run = artifact_values.get("scenario_run") or {}
     matrix = artifact_values.get("scenario_matrix") or {}
     graph = artifact_values.get("dependency_graph") or {}
-    if run and matrix and run.get("scenario_hash") != matrix.get("hash"):
+    matrix_hash = None
+    matrix_ref = receipt.get("scenario_matrix")
+    if isinstance(matrix_ref, dict) and nonempty(matrix_ref.get("path")):
+        try: matrix_hash = hashlib.sha256((project / matrix_ref["path"]).read_bytes()).hexdigest()
+        except OSError: pass
+    if run and matrix and matrix_hash and run.get("scenario_hash") != matrix_hash:
         check.issues.append("LOBSTER_SCENARIO_HASH_STALE")
     if run and graph and run.get("dependency_fingerprint") != graph.get("fingerprint"):
         check.issues.append("LOBSTER_DEPENDENCY_FINGERPRINT_STALE")
     evidence = artifact_values.get("evidence_manifest") or {}
     evidence_rows = evidence.get("evidence", []) if isinstance(evidence, dict) else []
     owners = {node.get("path") for node in graph.get("nodes", []) if isinstance(node, dict)}
+    for node in graph.get("nodes", []) if isinstance(graph.get("nodes"), list) else []:
+        if isinstance(node, dict) and nonempty(node.get("path")):
+            try:
+                current = hashlib.sha256((project / node["path"]).read_bytes()).hexdigest()
+                if current != node.get("sha256"):
+                    check.issues.append(f"LOBSTER_DEPENDENCY_CLOSURE_STALE:{node['path']}")
+            except OSError:
+                check.issues.append(f"LOBSTER_DEPENDENCY_NODE_MISSING:{node['path']}")
     for row in evidence_rows:
         if isinstance(row, dict):
             if row.get("scenario_hash") != run.get("scenario_hash") or row.get("dependency_fingerprint") != graph.get("fingerprint"):

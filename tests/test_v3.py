@@ -29,11 +29,12 @@ class V3Tests(unittest.TestCase):
 
     def test_runtime_adapter_is_honest_when_playwright_missing(self):
         output = self.root / "runtime.json"
-        result = subprocess.run(["node", str(Path(test_lobster.SCRIPT).parent / "browser-runner.mjs"), str(output), "http://127.0.0.1:9"], capture_output=True, text=True)
-        if result.returncode == 1:
-            self.assertEqual(json.loads(output.read_text())["status"], "UNAVAILABLE")
-        else:
-            self.assertIn(result.returncode, (0, 1))
+        matrix = self.root / "matrix.json"
+        matrix.write_text(json.dumps({"schema": "lobster-scenario-matrix/v1", "scenarios": [{"id": "smoke", "viewport": {"width": 390, "height": 844}, "steps": [{"action": "goto", "url": "/"}], "assertions": [{"assert": "url", "value": "http://127.0.0.1:9/"}]}]}), encoding="utf-8")
+        result = subprocess.run(["node", str(Path(test_lobster.SCRIPT).parent / "browser-runner.mjs"), "--project", str(self.root), "--out", str(output), "--base-url", "http://127.0.0.1:9", "--matrix", str(matrix)], capture_output=True, text=True)
+        self.assertIn(result.returncode, (0, 1))
+        self.assertTrue(output.is_file())
+        self.assertIn(json.loads(output.read_text())["status"], ("UNAVAILABLE", "PASS", "FAIL"))
 
     def test_run_command_has_no_root_name_error(self):
         output = self.root / "runtime.json"

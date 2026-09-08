@@ -1,0 +1,11 @@
+{
+  "schema": "lobster-visual-review/v1",
+  "independence": "INDEPENDENT_CONTEXT",
+  "review_run_id": "review-final",
+  "reviewer_mode": "INDEPENDENT_CONTEXT",
+  "started_at": "2026-09-08T22:44:00Z",
+  "finished_at": "2026-09-08T22:44:01Z",
+  "review_input_hash": "final",
+  "evidence_manifest_hash": "final",
+  "findings": []
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "lobster-runtime-inspection/v2",
+  "status": "PASS",
+  "runtime_errors": [],
+  "network_errors": [],
+  "inspected_scenarios": [
+    "mobile-overflow-and-runtime",
+    "dialog-focus-restoration"
+  ],
+  "horizontal_overflow_scenarios": [],
+  "zero_sized_interactives": [],
+  "offscreen_interactives": [],
+  "scroll_lock_leaks": [],
+  "focus_loss": []
+}

@@ -1,0 +1,45 @@
+{
+  "format": "lobster-receipt/v3",
+  "surface": "dashboard-proof",
+  "revision": "9e70799",
+  "profile": {
+    "path": "proof/profile.json",
+    "sha256": "84460d9ed415187ff8eaec06fa85c52abfb4d10eeade24bece1f068041308830"
+  },
+  "research": {
+    "path": "proof/research.json",
+    "sha256": "3eefd329267514862777ce1c8553d2d55652c80c6a93c8287135946122001542"
+  },
+  "platform_scout": {
+    "path": "proof/platform.json",
+    "sha256": "7dd9e05c96708a981c9bf3ed8a5bb10ed13d73b136865da8237969a037c1aa19"
+  },
+  "provenance_lock": {
+    "path": "proof/provenance.json",
+    "sha256": "ff69514275eb1f9d02d586e9052ac50ee333f4da1fb5e09a83f68dc8797a8a67"
+  },
+  "dependency_graph": {
+    "path": "proof/dependency-graph.json",
+    "sha256": "fc61b92ab2a98b5c7eda242791bbe6c33efb95b4ce47f33baa7d77bc2a14015f"
+  },
+  "scenario_matrix": {
+    "path": "proof/scenario-matrix.json",
+    "sha256": "63e7893cd9fca5d4bfc97b8e65adc1cdd9b2c0991c6892d583488d12e156be8c"
+  },
+  "scenario_run": {
+    "path": "proof/scenario-run.json",
+    "sha256": "ba7c2fefcd6c5729fa57a1c61e5a981b6e1026c19bb82d043a70372e0d0c1c1d"
+  },
+  "evidence_manifest": {
+    "path": "proof/evidence.json",
+    "sha256": "30d6024dfb220d737b4db82528573443f27f30a3a371a292ba922c7a423d5530"
+  },
+  "craft_review": {
+    "path": "proof/craft.json",
+    "sha256": "2c5fdadb79b6be5669f4e6e5cac40f0007e4127e46828933adb5288fd1cf0891"
+  },
+  "repair_ledger": {
+    "path": "proof/repair.json",
+    "sha256": "dc8fb4460113a1cadc3b52c632dad94f54c4f785a012292e4fb5090ed0715510"
+  }
+}

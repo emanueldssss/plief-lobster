@@ -1,0 +1,181 @@
+{
+  "schema": "lobster-runtime/v2",
+  "status": "FAIL",
+  "target": "http://127.0.0.1:4173",
+  "runner": "lobster-browser",
+  "runner_version": "3.1.0",
+  "browser_engine": "chromium",
+  "browser_version": "153.0.8010.12",
+  "run_id": "RUN-1788907226043",
+  "started_at": "2026-09-08T22:40:26.043Z",
+  "finished_at": "2026-09-08T22:40:26.043Z",
+  "project_revision": "9e70799017f2ea9b96b0d6276da42408997405cf",
+  "scenario_hash": "b7e0669e28966f8494f89f102fa34807fa97e3b42c39a7fa7bcee83ccd401604",
+  "project_fingerprint": "541e6861c92b8cfff2212eba5b2edc6ee6a1d3f315b2f84720801ef948fc8095",
+  "dependency_fingerprint": "a6b3bebbfb67837638f0feb94358e12d43e24ab1898d33cccb68836ad298fdf2",
+  "runtime_errors": [
+    "golden deliberate console defect",
+    "golden deliberate console defect",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "golden deliberate console defect",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "golden deliberate console defect",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "network_errors": [
+    {
+      "url": "http://127.0.0.1:4173/api/fail",
+      "status": 503
+    },
+    {
+      "url": "http://127.0.0.1:4173/api/fail",
+      "status": 503
+    },
+    {
+      "url": "http://127.0.0.1:4173/api/fail",
+      "status": 503
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "mobile-overflow-and-runtime",
+      "status": "FAIL",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "steps": [
+        {
+          "action": "goto",
+          "url": "/"
+        },
+        {
+          "action": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/baseline/mobile.png"
+        }
+      ],
+      "assertions": [
+        {
+          "assert": "noHorizontalOverflow",
+          "status": "FAIL",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "assert": "noConsoleErrors",
+          "status": "FAIL",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "assert": "noFailedRequests",
+          "status": "FAIL",
+          "expected": true,
+          "actual": false
+        }
+      ],
+      "failures": [
+        "noHorizontalOverflow assertion failed",
+        "noConsoleErrors assertion failed",
+        "noFailedRequests assertion failed"
+      ],
+      "console_errors": [
+        "golden deliberate console defect",
+        "golden deliberate console defect",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "page_errors": [],
+      "runtime_errors": [
+        "golden deliberate console defect",
+        "golden deliberate console defect",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "network_errors": [
+        {
+          "url": "http://127.0.0.1:4173/api/fail",
+          "status": 503
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/baseline/mobile.png",
+          "sha256": "fc0cd2a940a1db05a2cbc4e4483a81d528f0f98ede8e3fb7c2c9940286ea5f5d"
+        }
+      ],
+      "started_at": "2026-09-08T22:40:25.809Z",
+      "finished_at": "2026-09-08T22:40:25.884Z"
+    },
+    {
+      "id": "dialog-focus-restoration",
+      "status": "FAIL",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "steps": [
+        {
+          "action": "goto",
+          "url": "/"
+        },
+        {
+          "action": "click",
+          "locator": {
+            "css": "#open"
+          }
+        },
+        {
+          "action": "click",
+          "locator": {
+            "css": "#close"
+          }
+        },
+        {
+          "action": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/baseline/dialog.png"
+        }
+      ],
+      "assertions": [
+        {
+          "assert": "focused",
+          "status": "PASS",
+          "expected": true,
+          "actual": true
+        }
+      ],
+      "failures": [],
+      "console_errors": [
+        "golden deliberate console defect",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "golden deliberate console defect",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "page_errors": [],
+      "runtime_errors": [
+        "golden deliberate console defect",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "golden deliberate console defect",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "network_errors": [
+        {
+          "url": "http://127.0.0.1:4173/api/fail",
+          "status": 503
+        },
+        {
+          "url": "http://127.0.0.1:4173/api/fail",
+          "status": 503
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "golden/dashboard-proof/artifacts/baseline/dialog.png",
+          "sha256": "d99bb3674cfc7009b904edd51bf2d107a15e4191a9fa52e1914e694cdf31d836"
+        }
+      ],
+      "started_at": "2026-09-08T22:40:25.884Z",
+      "finished_at": "2026-09-08T22:40:26.043Z"
+    }
+  ]
+}

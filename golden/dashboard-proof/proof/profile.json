@@ -1,0 +1,10 @@
+{
+  "schema": "lobster-surface-profile/v1",
+  "source": "auto",
+  "signals": {
+    "substantial": true
+  },
+  "required_gates": [
+    "browser_execution"
+  ]
+}
