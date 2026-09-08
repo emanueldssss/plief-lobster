@@ -147,6 +147,17 @@ class DiscoveryTests(unittest.TestCase):
         with patch.object(lobster.subprocess, "run", return_value=fake):
             self.assertEqual(lobster.query(SCRIPT, "x", [], "matches")["status"], "ERROR")
 
+    def test_standalone_discovery_reports_optional_engine_unavailable(self):
+        with patch.dict("os.environ", {"PLIEF_SIFR_PATH": str(Path(tempfile.gettempdir()) / "lobster-missing-sifr")}, clear=False):
+            result = lobster.discover("archive concept", None)
+        self.assertEqual(result["results"]["sifr"]["status"], "UNAVAILABLE")
+        self.assertIn("could not be resolved", result["results"]["sifr"]["reason"])
+
+    def test_doctor_is_ready_without_optional_integrations(self):
+        result = lobster.doctor()
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["integrations"]["sifr"]["required"], False)
+
 
 class V2Tests(ReceiptTests):
     def setUp(self):

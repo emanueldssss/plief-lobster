@@ -30,7 +30,7 @@ Work in the user's language. Ambition means a committed composition, useful beha
 
 ## Ownership and entry
 
-Lobster coordinates the workflow. [Sifr](../plief-sifr/SKILL.md) owns product framing, DesignDNA, experience fit, integration, and visual repair. [Orun](../plief-orun/SKILL.md) owns component discovery, provenance, API and compatibility evidence. They are cooperating stages, not three competing design directors. Load a required sibling through the host skill loader when available; otherwise read its entry file. Resolve paths from the loaded skill directory, never from a guessed user home.
+Lobster coordinates the workflow. Optional Sifr and Orun integrations are described by the local contracts [sifr](integrations/sifr.json) and [orun](integrations/orun.json). They are cooperating stages, not requirements of the distributed ZIP. Resolve them through explicit overrides, host configuration, registered installations, and only then a development fallback. Never invent a public URL.
 
 For substantive frontend work, load Sifr and its routed modules. If a companion is absent, report it; continue available native and external research using these contracts, without claiming sibling retrieval or validation ran. Load Orun when choosing or integrating a capability, when the user requests actual provider components, or when native components cannot meet the requirement. Do not recursively reload Lobster from a sibling already working under this workflow.
 
@@ -68,7 +68,7 @@ Decide whether to preserve, extend, or replace the visual identity from the user
 
 ## 2. Make concepts change the implementation
 
-For new visual direction, execute Sifr concept retrieval before choosing the layout. Read its [retrieval contract](../plief-sifr/knowledge/retrieval.md). Use product/job/content terms; add English search terms when helpful because the local index tokenizes English vocabulary. Do not conclude that a Portuguese request has no applicable concept after one literal empty search.
+For new visual direction, execute Sifr concept retrieval when the resolver reports it available; otherwise record concept-engine unavailability and continue with the generic research contract when allowed. Use product/job/content terms; add English search terms when helpful because the local index tokenizes English vocabulary. Do not conclude that a Portuguese request has no applicable concept after one literal empty search.
 
 The bundled discovery helper calls the actual sibling engines and retains their full responses:
 
@@ -99,7 +99,7 @@ Implement the defining section and one real interaction first. Use real or hones
 
 Then complete the requested flow: navigation, actions, loading, empty, error, success, keyboard, touch, and relevant data extremes. Use existing production boundaries; label simulation honestly when building a prototype. An impressive first viewport with dead controls is unfinished.
 
-Validate Sifr artifacts with its real CLI: `python "<sifr-dir>/engines/ir_validate.py" "<experience-ir.json>"` and `python "<sifr-dir>/engines/ir_validate.py" --dna "<design-dna.json>" --strict-visual`. The IR argument is positional; do not invent an `--in` flag.
+Validate Sifr artifacts with the resolved integration's declared interface. If Sifr is unavailable, mark the concept pass unavailable instead of claiming validation.
 
 ## 5. Inspect the result, repair the cause
 

@@ -19,10 +19,10 @@
       ".plif/artifacts/<surface-id>/selection-record.json"
     ]
   },
-  "companions": [
-    "plief-sifr",
-    "plief-orun"
-  ],
+  "integrations": {
+    "sifr": {"required": false, "capability": "concept-design-repair", "resolver": "skill"},
+    "orun": {"required": false, "capability": "component-discovery-provenance", "resolver": "skill"}
+  },
   "scripts": [
     "scripts/lobster.py",
     "scripts/browser-runner.mjs",
@@ -42,6 +42,10 @@
     "schemas/lobster-receipt-v3.json",
     "schemas/dependency-graph-v2.json",
     "schemas/runtime-v2.json"
+  ],
+  "integration_contracts": [
+    "integrations/sifr.json",
+    "integrations/orun.json"
   ],
   "upstream": {
     "url": "https://github.com/pbakaus/impeccable",
@@ -74,5 +78,6 @@
     "verify-v3",
     "repair-status",
     "status"
+    ,"doctor"
   ]
 }

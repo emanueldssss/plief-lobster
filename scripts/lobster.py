@@ -11,14 +11,83 @@ from datetime import date
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
 import sys
 from urllib.parse import urlparse
 
-BUILTIN = Path(__file__).resolve().parents[2]
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+BUILTIN = PACKAGE_ROOT.parent
 SHA256 = re.compile(r"[0-9a-f]{64}", re.IGNORECASE)
+
+
+def _integration_registry() -> dict:
+    path = PACKAGE_ROOT / "integrations"
+    result = {}
+    for name in ("sifr", "orun"):
+        result[name] = read_json(path / f"{name}.json")
+    return result
+
+
+def resolve_integrations() -> dict:
+    """Resolve optional engines without network guesses or implicit requirements."""
+    registry = _integration_registry()
+    config_path = Path.home() / ".plief" / "lobster" / "config.json"
+    config = {}
+    if config_path.is_file():
+        try:
+            config = read_json(config_path)
+        except (OSError, ValueError):
+            config = {"_config_error": "config.json is not valid JSON"}
+    resolved = {}
+    for name, contract in registry.items():
+        env_name = f"PLIEF_{name.upper()}_PATH"
+        candidates = []
+        if os.environ.get(env_name):
+            candidates.append(("override", Path(os.environ[env_name])))
+        configured = config.get("integrations", {}).get(name, {}) if isinstance(config, dict) else {}
+        if configured.get("path"):
+            candidates.append(("config", Path(configured["path"])))
+        # A host may provide a registry file without Lobster guessing a URL.
+        if configured.get("registry_path"):
+            candidates.append(("registry", Path(configured["registry_path"])))
+        # Development fallback is deliberately last and never a distribution contract.
+        candidates.append(("development", BUILTIN / contract["development_directory"]))
+        item = {"integration": name, "capability": contract["capability"], "status": "UNAVAILABLE", "required": False}
+        for source, candidate in candidates:
+            entry = candidate.expanduser().resolve()
+            if not entry.exists():
+                if source in ("override", "config"):
+                    item.update(status="MISCONFIGURED", path=str(entry), reason=f"configured {name} path does not exist")
+                    break
+                continue
+            skill = entry / "SKILL.md"
+            if not skill.is_file():
+                item.update(status="MISCONFIGURED", path=str(entry), reason="configured integration is missing SKILL.md")
+                break
+            version = "unknown"
+            manifest = entry / "manifest.json"
+            if manifest.is_file():
+                try: version = str(read_json(manifest).get("version", version))
+                except (OSError, ValueError): pass
+            compatible = version == "unknown" or version.split(".", 1)[0].isdigit() and int(version.split(".", 1)[0]) == int(contract.get("compatible_major", 0))
+            item.update(status="AVAILABLE" if compatible else "INCOMPATIBLE", path=str(entry), source=source, version=version, compatible=compatible)
+            break
+        resolved[name] = item
+    return resolved
+
+
+def doctor(project: Path | None = None) -> dict:
+    schemas_ok = all((PACKAGE_ROOT / "schemas").glob("*.json"))
+    browser = PACKAGE_ROOT / "scripts" / "browser-runner.mjs"
+    integrations = resolve_integrations()
+    return {"status": "READY" if schemas_ok and browser.is_file() else "BLOCKING",
+            "core": {"schemas": "PASS" if schemas_ok else "FAIL", "runtime": "PASS", "browser_adapter": "AVAILABLE" if browser.is_file() else "MISSING"},
+            "integrations": integrations,
+            "available_workflow": ["profile", "plan", "scout", "browser verification", "craft verification"],
+            "unavailable_enhancements": [f"{name}-assisted {item['capability']}" for name, item in integrations.items() if item["status"] != "AVAILABLE"]}
 
 
 def read_json(path: Path):
@@ -45,17 +114,24 @@ def query(script: Path, query_text: str, options: list[str], key: str) -> dict:
 
 def discover(concept: str | None, capability: str | None, framework: str = "") -> dict:
     jobs = {}
+    integrations = resolve_integrations()
     with ThreadPoolExecutor(max_workers=2) as pool:
         if concept:
-            jobs["sifr"] = pool.submit(query, BUILTIN / "plief-sifr/scripts/query_design_concepts.py",
-                                       concept, ["--top-k", "4"], "matches")
+            item = integrations["sifr"]
+            script = Path(item["path"]) / "scripts" / "query_design_concepts.py" if item["status"] == "AVAILABLE" else None
+            jobs["sifr"] = pool.submit(query, script or Path("__unavailable__"), concept, ["--top-k", "4"], "matches")
         if capability:
             options = ["--top-k", "4"] + (["--framework", framework] if framework else [])
-            jobs["orun"] = pool.submit(query, BUILTIN / "plief-orun/scripts/query_capabilities.py",
-                                       capability, options, "candidates")
+            item = integrations["orun"]
+            script = Path(item["path"]) / "scripts" / "query_capabilities.py" if item["status"] == "AVAILABLE" else None
+            jobs["orun"] = pool.submit(query, script or Path("__unavailable__"), capability, options, "candidates")
+        results = {name: future.result() for name, future in jobs.items()}
+        for name, result in results.items():
+            if result["status"] == "ERROR" and integrations[name]["status"] != "AVAILABLE":
+                result.update(status="UNAVAILABLE", integration=name, reason=f"{name.title()} installation could not be resolved.")
         return {"format": "lobster-discovery/v1", "authority": "LOCAL_INDEX_ONLY",
                 "native_inspection_performed": False, "installation_performed": False,
-                "results": {name: future.result() for name, future in jobs.items()}}
+                "integrations": integrations, "results": results}
 
 
 def verify_implementation(receipt, project: Path) -> dict:
@@ -746,9 +822,10 @@ def main() -> int:
     scout = commands.add_parser("scout")
     scout.add_argument("--project", type=Path, required=True)
     scout.add_argument("--brief", default="")
+    commands.add_parser("doctor")
     for name in ("run", "inspect", "review", "provenance-check", "dependency-check", "repair-status", "status"):
         command = commands.add_parser(name)
-        command.add_argument("--project", type=Path, required=True)
+        command.add_argument("--project", type=Path, required=name != "status")
         command.add_argument("--input", type=Path)
         command.add_argument("--base-url")
         command.add_argument("--matrix", type=Path)
@@ -773,6 +850,9 @@ def main() -> int:
             profile = auto_profile(args.project, args.brief)
             print(json.dumps({"status": "READY", "profile": profile, "next": "Record exact platform support and fallback in platform-scout.json"}, ensure_ascii=False, indent=2))
             return 0
+        if args.command == "doctor":
+            print(json.dumps(doctor(), ensure_ascii=False, indent=2))
+            return 0 if doctor()["status"] == "READY" else 2
         if args.command in ("run", "inspect", "review"):
             if args.base_url and args.matrix and args.out:
                 runner = ROOT / "scripts" / "browser-runner.mjs"
@@ -786,10 +866,14 @@ def main() -> int:
         if args.command == "dependency-check" and args.input and args.out:
             graph = ROOT / "scripts" / "dependency-graph.mjs"
             return subprocess.run(["node", str(graph), str(args.project), str(args.input), str(args.out)], check=False).returncode
-        if args.command == "status" and args.input:
-            result = v3_verify(read_json(args.input), args.project)
+        if args.command == "status":
+            if args.input:
+                result = v3_verify(read_json(args.input), args.project)
+            else:
+                result = {"status": "READY", "lobster": "READY", "integrations": resolve_integrations(),
+                          "available_workflow": ["profile", "plan", "scout", "browser verification", "craft verification"]}
             print(json.dumps(result, ensure_ascii=False, indent=2))
-            return 0 if result.get("computed_verdict") == "DELIVERY_READY" else 1
+            return 0 if result.get("computed_verdict", result.get("status")) in ("DELIVERY_READY", "READY") else 1
         if args.command in ("provenance-check", "dependency-check", "repair-status", "status"):
             result = {"status": "INCOMPLETE", "command": args.command, "reason": "v3 receipt index or input artifact is required"}
             print(json.dumps(result, ensure_ascii=False, indent=2))

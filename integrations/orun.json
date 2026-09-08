@@ -1,0 +1,9 @@
+{
+  "integration": "orun",
+  "capability": "component-discovery-provenance",
+  "resolver": "skill",
+  "required": false,
+  "development_directory": "plief-orun",
+  "interface": {"query": "scripts/query_capabilities.py", "output_key": "candidates"},
+  "compatible_major": 2
+}

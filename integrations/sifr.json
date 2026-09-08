@@ -1,0 +1,9 @@
+{
+  "integration": "sifr",
+  "capability": "concept-design-repair",
+  "resolver": "skill",
+  "required": false,
+  "development_directory": "plief-sifr",
+  "interface": {"query": "scripts/query_design_concepts.py", "output_key": "matches"},
+  "compatible_major": 2
+}

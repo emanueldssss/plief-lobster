@@ -29,13 +29,13 @@ Use a product-grounded thesis when the index has no suitable match. Label it aut
 
 ## Native inventory and Orun acquisition
 
-Read [Sifr component intelligence](../../plief-sifr/modules/component-intelligence.md) and [Orun's integration contract](../../plief-orun/rules/integration-contract.md) at this handoff.
+Read the packaged integration contracts in [`integrations/sifr.json`](../integrations/sifr.json) and [`integrations/orun.json`](../integrations/orun.json) at this handoff. Resolve the external implementation through Lobster's deterministic resolver.
 
 1. Inspect existing components, exports, callers, tokens, installed packages, and configured registries. Record the actual files searched and why they do or do not satisfy the slot. `already_searched_native` describes work performed; it is not a ritual boolean.
-2. Fill [the query template](../../plief-sifr/adapters/orun-selection-query.template.json) from observed project facts. Validate using `python "<orun-dir>/scripts/validate_query_contract.py" "<selection-query.json>"`.
+2. Fill the host/provider query contract from observed project facts. Validate with the resolved integration only when its contract declares a validator.
 3. Execute `lobster.py discover --capability ...` or the sibling query directly. Keep bounded candidates. Inspect a source profile only when its result is relevant. Zero matches or missing catalogs permit direct official research; they do not prove custom code is necessary.
 4. Follow the official documentation to the exact package, registry item, or source file. Inspect source, license, dependencies, framework and styling assumptions, browser/server boundary, keyboard semantics, and lifecycle. Verify current facts using available web tools. Search ranking does not perform these checks.
-5. Select and validate [the record template](../../plief-sifr/adapters/orun-selection-record.template.json). Record inspected URLs/files, observed version or revision, and reasons for rejecting credible alternatives. Do not copy its sample candidate or example evidence. Never fabricate `VERIFIED_CURRENT`.
+5. Select and validate the local selection-record contract. Record inspected URLs/files, observed version or revision, and reasons for rejecting credible alternatives. Do not copy sample candidates or evidence URLs. Never fabricate `VERIFIED_CURRENT`.
 6. Use the existing package manager and verified acquisition instructions. Inspect what will be added or overwritten. Carry out reversible project integration already authorized by the task; do not ask again merely because it adds a suitable dependency. Do not run unreviewed remote shell installers or authorize unrelated mutations.
 7. Read the acquired code/API. Preserve the mechanism that earned selection. Map it to host tokens, routing, state, localization, focus, mobile behavior, and reduced motion. Remove demo copy and unnecessary runtime cost. Record source and material adaptations.
 8. Mount it in the target's reachable render path and exercise its defining behavior. An installed dependency, unused import, detached demo, commented JSX, or file named after a library is not integration.
