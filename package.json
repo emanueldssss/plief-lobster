@@ -47,7 +47,7 @@
     "CHANGELOG.md"
   ],
   "bin": {
-    "lobster": "./bin/lobster.js"
+    "lobster": "bin/lobster.js"
   },
   "engines": {
     "node": ">=18",
