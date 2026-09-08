@@ -35,6 +35,11 @@ class V3Tests(unittest.TestCase):
         else:
             self.assertIn(result.returncode, (0, 1))
 
+    def test_run_command_has_no_root_name_error(self):
+        output = self.root / "runtime.json"
+        result = subprocess.run([sys.executable, str(test_lobster.SCRIPT), "run", "--project", str(self.root), "--base-url", "http://127.0.0.1:9", "--matrix", str(self.root / "missing.json"), "--out", str(output)], capture_output=True, text=True)
+        self.assertNotIn("NameError", result.stderr + result.stdout)
+
     def test_v3_stages_are_monotonic(self):
         good = {"format":"lobster-receipt/v3","surface":"x","revision":"r","stages":{stage:"PASS" for stage in test_lobster.lobster.V3_STAGES}}
         for field in ("profile","research","platform_scout","provenance_lock","dependency_graph","scenario_run","craft_review","repair_ledger","verdict"):

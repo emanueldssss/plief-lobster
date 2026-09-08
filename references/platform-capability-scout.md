@@ -46,10 +46,11 @@ Store `.plif/artifacts/<surface-id>/platform-scout.json` with `schema: lobster-p
 - `evidence_ids`: passed receipt visual/interaction evidence covering that owner, including actual chosen behavior.
 - `fallback_evidence_ids`: passed interaction evidence covering that owner, observing the forced-unsupported path or library fallback and essential behavior. A fallback plan is not a passing observation.
 
-Attach the artifact to receipt v2 as `platform_scout: {path, sha256}`. New applicable work runs:
+Attach the artifact to receipt v3 as `platform_scout: {path, sha256}`. New applicable work runs:
 
 ```sh
 python scripts/lobster.py verify lobster-receipt.json --project . --require-platform
 ```
 
 The flag rejects missing Scout evidence and works with the existing v2 gates. Without it, legacy receipts remain readable; an attached Scout is still validated. The CLI checks record/file consistency, not browser execution, the truth of support claims or freshness relative to an invented expiration interval. Reinspect when targets, chosen APIs or support facts change. The Scout complements external visual/component research; it does not waive reference diversity or provenance.
+

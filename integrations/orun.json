@@ -3,7 +3,9 @@
   "capability": "component-discovery-provenance",
   "resolver": "skill",
   "required": false,
+  "version_range": ">=2.0.0 <3.0.0",
   "development_directory": "plief-orun",
-  "interface": {"query": "scripts/query_capabilities.py", "output_key": "candidates"},
+  "interface": {"query": "scripts/query_capabilities.py", "output_key": "candidates", "input": "capability text plus --top-k and optional --framework", "output": "JSON object with candidates array"},
+  "required_files": ["SKILL.md", "manifest.json", "scripts/query_capabilities.py"],
   "compatible_major": 2
 }

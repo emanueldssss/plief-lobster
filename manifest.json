@@ -54,11 +54,12 @@
   },
   "contracts": {
     "research": "lobster-research/v1",
-    "receipt": "lobster-receipt/v2",
+    "receipt": "lobster-receipt/v3",
+    "legacy_receipt_v2": "lobster-receipt/v2",
     "legacy_receipt": "lobster-receipt/v1 (integrity only)",
     "platform": "lobster-platform/v1"
     ,"receipt_v3": "lobster-receipt/v3",
-    "runtime": "lobster-runtime/v1",
+    "runtime": "lobster-runtime/v2",
     "evidence": "lobster-evidence/v3"
   },
   "commands": [

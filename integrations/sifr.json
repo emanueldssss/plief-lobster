@@ -3,7 +3,9 @@
   "capability": "concept-design-repair",
   "resolver": "skill",
   "required": false,
+  "version_range": ">=2.0.0 <3.0.0",
   "development_directory": "plief-sifr",
-  "interface": {"query": "scripts/query_design_concepts.py", "output_key": "matches"},
+  "interface": {"query": "scripts/query_design_concepts.py", "output_key": "matches", "input": "query text plus --top-k", "output": "JSON object with matches array"},
+  "required_files": ["SKILL.md", "manifest.json", "scripts/query_design_concepts.py"],
   "compatible_major": 2
 }

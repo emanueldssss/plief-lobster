@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 BUILTIN = PACKAGE_ROOT.parent
+ROOT = PACKAGE_ROOT
 SHA256 = re.compile(r"[0-9a-f]{64}", re.IGNORECASE)
 
 
@@ -64,15 +65,22 @@ def resolve_integrations() -> dict:
                     break
                 continue
             skill = entry / "SKILL.md"
-            if not skill.is_file():
-                item.update(status="MISCONFIGURED", path=str(entry), reason="configured integration is missing SKILL.md")
+            manifest = entry / "manifest.json"
+            if not skill.is_file() or not manifest.is_file():
+                item.update(status="MISCONFIGURED", path=str(entry), reason="integration requires SKILL.md and manifest.json")
                 break
             version = "unknown"
-            manifest = entry / "manifest.json"
             if manifest.is_file():
                 try: version = str(read_json(manifest).get("version", version))
                 except (OSError, ValueError): pass
-            compatible = version == "unknown" or version.split(".", 1)[0].isdigit() and int(version.split(".", 1)[0]) == int(contract.get("compatible_major", 0))
+            if version == "unknown":
+                item.update(status="INCOMPATIBLE", path=str(entry), source=source, version=version, compatible=False, reason="integration version is not detectable")
+                break
+            compatible = version.split(".", 1)[0].isdigit() and int(version.split(".", 1)[0]) == int(contract.get("compatible_major", 0))
+            entrypoint = entry / contract["interface"]["query"]
+            if not entrypoint.is_file():
+                item.update(status="BROKEN", path=str(entry), source=source, version=version, compatible=compatible, reason=f"missing query entrypoint: {entrypoint.name}")
+                break
             item.update(status="AVAILABLE" if compatible else "INCOMPATIBLE", path=str(entry), source=source, version=version, compatible=compatible)
             break
         resolved[name] = item
@@ -80,11 +88,22 @@ def resolve_integrations() -> dict:
 
 
 def doctor(project: Path | None = None) -> dict:
-    schemas_ok = all((PACKAGE_ROOT / "schemas").glob("*.json"))
+    manifest_ok = False
+    try: manifest_ok = read_json(PACKAGE_ROOT / "manifest.json").get("version") == "3.1.0"
+    except (OSError, ValueError, AttributeError): pass
+    schema_paths = list((PACKAGE_ROOT / "schemas").glob("*.json"))
+    schemas_ok = bool(schema_paths)
+    for schema in schema_paths:
+        try: read_json(schema)
+        except (OSError, ValueError): schemas_ok = False
     browser = PACKAGE_ROOT / "scripts" / "browser-runner.mjs"
+    dependency = PACKAGE_ROOT / "scripts" / "dependency-graph.mjs"
+    inspector = PACKAGE_ROOT / "scripts" / "inspect-runtime.mjs"
+    references_ok = (PACKAGE_ROOT / "references").is_dir()
     integrations = resolve_integrations()
-    return {"status": "READY" if schemas_ok and browser.is_file() else "BLOCKING",
-            "core": {"schemas": "PASS" if schemas_ok else "FAIL", "runtime": "PASS", "browser_adapter": "AVAILABLE" if browser.is_file() else "MISSING"},
+    core_ready = manifest_ok and schemas_ok and browser.is_file() and dependency.is_file() and inspector.is_file() and references_ok
+    return {"status": "READY" if core_ready else "BLOCKING",
+            "core": {"manifest": "PASS" if manifest_ok else "FAIL", "schemas": "PASS" if schemas_ok else "FAIL", "cli": "PASS", "runtime_inspector": "READY" if inspector.is_file() else "MISSING", "browser_adapter": "AVAILABLE" if browser.is_file() else "MISSING", "dependency_engine": "READY" if dependency.is_file() else "MISSING", "references": "PASS" if references_ok else "FAIL"},
             "integrations": integrations,
             "available_workflow": ["profile", "plan", "scout", "browser verification", "craft verification"],
             "unavailable_enhancements": [f"{name}-assisted {item['capability']}" for name, item in integrations.items() if item["status"] != "AVAILABLE"]}
@@ -613,7 +632,11 @@ def auto_profile(project: Path, brief: str = "") -> dict:
     source_suffixes = {".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".vue", ".svelte", ".html", ".py"}
     files = [path for path in root.rglob("*") if path.is_file() and path.suffix.lower() in source_suffixes and ".git" not in path.parts and "node_modules" not in path.parts]
     names = " ".join(path.name.lower() for path in files)
-    text = (brief + " " + names).lower()
+    contents = []
+    for path in files:
+        try: contents.append(path.read_text(encoding="utf-8", errors="ignore")[:200_000])
+        except OSError: pass
+    text = (brief + " " + names + " " + " ".join(contents)).lower()
     categories = {
         "substantial": len(files) >= 8 or any(word in text for word in ("landing", "dashboard", "redesign", "app", "page")),
         "expressive": any(word in text for word in ("premium", "cinematic", "shader", "hero", "portfolio", "showcase")),
@@ -626,14 +649,27 @@ def auto_profile(project: Path, brief: str = "") -> dict:
     }
     if categories["substantial"]:
         categories["responsive"] = True
+    categories.update({
+        "view_transitions": "viewtransition" in text or "view transition" in text,
+        "scroll_timeline": "animation-timeline" in text or "view-timeline" in text,
+        "anchor_positioning": "anchor-name" in text or "position-anchor" in text,
+        "canvas": "<canvas" in text or "getcontext(" in text,
+        "webgl": "webgl" in text,
+        "uploads": "type=\"file\"" in text or "dropzone" in text or "dragenter" in text,
+        "routing": "react-router" in text or "next/router" in text or "router" in text,
+    })
     required = ["research", "platform_scout", "browser_execution", "scenario_matrix", "craft_review"] if categories["substantial"] else ["technical_check"]
     if categories["dense_data"]: required.append("data_interface_craft")
     if categories["forms"]: required.append("form_craft")
     if categories["interactive"]: required.append("interaction_craft")
-    return {"schema": "lobster-surface-profile/v1", "source": "auto", "project": str(root), "signals": categories, "required_gates": sorted(set(required)), "not_applicable": [name for name, enabled in (("3d", categories["3d"]), ("motion", categories["motion"])) if not enabled]}
+    domains = [name for name, enabled in categories.items() if enabled and name in ("forms", "dense_data", "interactive", "motion", "3d", "uploads", "routing")]
+    platform_required = categories["motion"] or categories["view_transitions"] or categories["scroll_timeline"] or categories["anchor_positioning"]
+    browser_required = categories["substantial"] or categories["interactive"] or platform_required
+    confidence = "HIGH" if contents and len(files) >= 3 else "MEDIUM" if contents else "LOW"
+    return {"schema": "lobster-surface-profile/v1", "source": "auto", "project": str(root), "classification": "substantial frontend" if categories["substantial"] else "scoped frontend edit", "signals": categories, "required_domains": sorted(set(domains)), "required_gates": sorted(set(required)), "platform_scout_required": platform_required, "browser_required": browser_required, "confidence": confidence, "not_applicable": [name for name, enabled in (("3d", categories["3d"]), ("motion", categories["motion"])) if not enabled]}
 
 
-def load_and_validate_artifact(reference, project, kind):
+def validate_artifact(reference, project, kind):
     check = RecordCheck(project)
     path = check.file(reference, f"{kind}.artifact")
     if not path:
@@ -644,6 +680,25 @@ def load_and_validate_artifact(reference, project, kind):
         return None, [f"LOBSTER_SCHEMA_TYPE:{kind}: invalid JSON ({error})"]
     if not isinstance(value, dict):
         return None, [f"LOBSTER_SCHEMA_TYPE:{kind}: object required"]
+    schema_file = {"profile": "surface-profile-v1.json", "dependency_graph": "dependency-graph-v2.json", "scenario_matrix": "scenario-matrix-v1.json", "scenario_run": "runtime-v2.json", "craft_review": "visual-review-v1.json", "provenance_lock": "provenance-lock-v1.json", "evidence_manifest": "evidence-manifest-v3.json", "receipt": "lobster-receipt-v3.json"}.get(kind)
+    if schema_file:
+        try:
+            schema = read_json(PACKAGE_ROOT / "schemas" / schema_file)
+            for field in schema.get("required", []):
+                if field not in value:
+                    check.issues.append(f"LOBSTER_SCHEMA_REQUIRED_FIELD:{kind}:{field}")
+            if schema.get("additionalProperties") is False:
+                allowed = set(schema.get("properties", {}))
+                for field in value:
+                    if field not in allowed:
+                        check.issues.append(f"LOBSTER_SCHEMA_UNKNOWN_FIELD:{kind}:{field}")
+            for field, spec in schema.get("properties", {}).items():
+                if field in value and "const" in spec and value[field] != spec["const"]:
+                    check.issues.append(f"LOBSTER_SCHEMA_ENUM:{kind}:{field}")
+                if field in value and "enum" in spec and value[field] not in spec["enum"]:
+                    check.issues.append(f"LOBSTER_SCHEMA_ENUM:{kind}:{field}")
+        except (OSError, ValueError, TypeError) as error:
+            check.issues.append(f"LOBSTER_SCHEMA_LOAD:{kind}:{error}")
     schemas = {
         "profile": ("schema", "signals", "required_gates"),
         "research": ("schema", "need", "queries", "sources", "candidates", "implementation_impacts"),
@@ -677,6 +732,9 @@ def load_and_validate_artifact(reference, project, kind):
         if value.get("independence") not in ("INDEPENDENT_CONTEXT", "SEPARATE_AGENT", "SAME_AGENT_FRESH_PASS", "UNVERIFIED"):
             check.issues.append("LOBSTER_REVIEW_INDEPENDENCE_INVALID")
     return value, check.issues
+
+
+load_and_validate_artifact = validate_artifact
 
 
 def stage_result(stage, status, proofs=None, findings=None):
@@ -781,7 +839,7 @@ def v3_verify(receipt, project: Path) -> dict:
                verify_regression(artifact_values, artifact_issues.get("repair_ledger", []))]
     computed_stages = {item["stage"]: item["status"] for item in results}
     computed_verdict = compute_verdict(results)
-    return {"status": "READY_FOR_REVIEW" if not check.issues else "INCOMPLETE", "computed_stages": computed_stages, "stage_results": results, "computed_verdict": computed_verdict, "issues": check.issues, "scope": "Stages and verdict are computed from child artifact content; receipt claims are ignored."}
+    return {"status": computed_verdict, "computed_stages": computed_stages, "stage_results": results, "computed_verdict": computed_verdict, "issues": check.issues, "scope": "Stages and verdict are computed from child artifact content; receipt claims are ignored."}
 
 
 def plan(project: Path, brief: str = "") -> dict:
@@ -853,7 +911,22 @@ def main() -> int:
         if args.command == "doctor":
             print(json.dumps(doctor(), ensure_ascii=False, indent=2))
             return 0 if doctor()["status"] == "READY" else 2
-        if args.command in ("run", "inspect", "review"):
+        if args.command == "inspect":
+            if not args.input:
+                print(json.dumps({"status": "INCOMPLETE", "command": "inspect", "reason": "runtime input artifact is required"}, ensure_ascii=False, indent=2))
+                return 1
+            inspector = ROOT / "scripts" / "inspect-runtime.mjs"
+            return subprocess.run(["node", str(inspector), str(args.input)], check=False).returncode
+        if args.command == "review":
+            if not args.input:
+                print(json.dumps({"status": "INCOMPLETE", "command": "review", "reason": "craft review input artifact is required"}, ensure_ascii=False, indent=2))
+                return 1
+            review = read_json(args.input)
+            valid = isinstance(review, dict) and review.get("schema") in ("lobster-visual-review/v1", "lobster-craft-review/v1") and isinstance(review.get("findings", []), list)
+            result = {"status": "PASS" if valid else "INCOMPLETE", "command": "review", "review": review if valid else None, "reason": None if valid else "craft review schema/findings required"}
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0 if valid else 1
+        if args.command == "run":
             if args.base_url and args.matrix and args.out:
                 runner = ROOT / "scripts" / "browser-runner.mjs"
                 command = ["node", str(runner), "--project", str(args.project), "--base-url", args.base_url, "--matrix", str(args.matrix), "--out", str(args.out)]
@@ -866,6 +939,13 @@ def main() -> int:
         if args.command == "dependency-check" and args.input and args.out:
             graph = ROOT / "scripts" / "dependency-graph.mjs"
             return subprocess.run(["node", str(graph), str(args.project), str(args.input), str(args.out)], check=False).returncode
+        if args.command in ("provenance-check", "repair-status") and args.input:
+            record = read_json(args.input)
+            result = v3_verify(record, args.project)
+            stage = "SOURCE_VERIFIED" if args.command == "provenance-check" else "REGRESSION_VERIFIED"
+            selected = next(item for item in result["stage_results"] if item["stage"] == stage)
+            print(json.dumps({"status": selected["status"], "command": args.command, "stage": selected}, ensure_ascii=False, indent=2))
+            return 0 if selected["status"] in ("PASS", "N/A") else 1
         if args.command == "status":
             if args.input:
                 result = v3_verify(read_json(args.input), args.project)

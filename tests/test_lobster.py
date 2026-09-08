@@ -158,6 +158,13 @@ class DiscoveryTests(unittest.TestCase):
         self.assertEqual(result["status"], "READY")
         self.assertEqual(result["integrations"]["sifr"]["required"], False)
 
+    def test_fake_skill_file_never_becomes_available(self):
+        fake = Path(tempfile.mkdtemp()) / "fake-sifr"
+        fake.mkdir(); (fake / "SKILL.md").write_text("fake", encoding="utf-8")
+        with patch.dict("os.environ", {"PLIEF_SIFR_PATH": str(fake)}, clear=False):
+            result = lobster.resolve_integrations()["sifr"]
+        self.assertEqual(result["status"], "MISCONFIGURED")
+
 
 class V2Tests(ReceiptTests):
     def setUp(self):

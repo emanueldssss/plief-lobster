@@ -46,7 +46,7 @@ When acquisition fails, classify once: unavailable source, access/license, incom
 
 ## Delivery receipt
 
-Use `lobster-receipt/v2` for new substantial work, with the extensions in [research-contract.md](research-contract.md). The preserved core fields below also describe legacy `lobster-receipt/v1`. All file paths are project-relative. Each file object has `path` and `sha256` computed from actual bytes. Generate hashes after the final relevant edit. The verifier rejects absent or changed files, traversal, duplicate IDs, missing proof links, and external-component claims with no recorded source. It cannot tell whether evidence text is truthful; the reviewer must inspect it.
+Use `lobster-receipt/v3` for new substantial work. `lobster-receipt/v3` and v1 are legacy compatibility contracts only. All file paths are project-relative. Each file object has `path` and `sha256` computed from actual bytes. Generate hashes after the final relevant edit. The verifier rejects absent or changed files, traversal, duplicate IDs, missing proof links, and external-component claims with no recorded source. It cannot tell whether evidence text is truthful; the reviewer must inspect it.
 
 Required fields:
 
@@ -60,7 +60,7 @@ Record at least one visual observation, one exercised interaction, and one relev
 
 Store screenshots, test output, or trace/log evidence before referencing them. An interaction artifact can be a captured browser trace or a concise observation log recording the action and observed outcome; it cannot be a future test plan labeled passed. `subject_files` must cover the implementation/use-site attached to the proof, so changing the source invalidates the old claim.
 
-The CLI returns exit 0 / `READY_FOR_REVIEW` when the record is complete and internally consistent; exit 1 / `INCOMPLETE` for recorded gaps, failed checks, or invalid evidence; exit 2 / `ERROR` when input/tooling prevents inspection. A missing browser is an honest incomplete visual gate, not permission to invent a passing record. None of these results measures design quality or substitutes for the final rendered review.
+The v3 CLI returns the computed verdict `DELIVERY_READY`, `INCOMPLETE`, or `BLOCKED`; exit 1 covers incomplete or blocked proof and exit 2 covers input/tooling errors. A missing browser is an honest incomplete visual gate, not permission to invent a passing record. Legacy commands may return `READY_FOR_REVIEW` only for legacy integrity checks.
 
 
 ## v2 execution pipeline
@@ -71,9 +71,10 @@ The stage table above defines ownership; this sequence defines the v2 handoffs. 
 
 Normalize acquired tokens, radii, spacing, type, icon language, motion durations/easing/springs/stagger, responsive behavior, content, state, accessibility and theme. Preserve the defining source mechanism. Source acquisition is not permission to ship its unmodified demo defaults.
 
-The delivery-receipt section above describes the preserved v1 core. New substantial work uses lobster-receipt/v2 and all applicable research/craft extensions. A legacy READY_FOR_REVIEW only reports legacy record integrity.
+The delivery-receipt section above describes the preserved legacy core. New substantial work uses lobster-receipt/v3 and all applicable research/craft extensions. A legacy READY_FOR_REVIEW only reports legacy record integrity.
 
 
 ## Platform capability decision
 
-Before choosing motion, scroll or positioning dependencies, read [platform-capability-scout.md](platform-capability-scout.md). Inspect current browser mechanisms, exact target support and fallback. Record native/hybrid/library choice with cost and behavioral reasons. The platform survey complements visual research; it does not count as acquired component provenance. New applicable deliveries attach platform_scout to receipt v2 and run verify with --require-platform.
+Before choosing motion, scroll or positioning dependencies, read [platform-capability-scout.md](platform-capability-scout.md). Inspect current browser mechanisms, exact target support and fallback. Record native/hybrid/library choice with cost and behavioral reasons. The platform survey complements visual research; it does not count as acquired component provenance. New applicable deliveries attach platform_scout to receipt v3 and run verify-v3 with --require-platform where supported.
+

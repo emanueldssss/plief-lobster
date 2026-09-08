@@ -55,4 +55,5 @@ If the current catalog lacks a strong fit, search the current web for newer high
 
 ## Platform capability decision
 
-Before choosing motion, scroll or positioning dependencies, read [platform-capability-scout.md](platform-capability-scout.md). Inspect current browser mechanisms, exact target support and fallback. Record native/hybrid/library choice with cost and behavioral reasons. The platform survey complements visual research; it does not count as acquired component provenance. New applicable deliveries attach platform_scout to receipt v2 and run verify with --require-platform.
+Before choosing motion, scroll or positioning dependencies, read [platform-capability-scout.md](platform-capability-scout.md). Inspect current browser mechanisms, exact target support and fallback. Record native/hybrid/library choice with cost and behavioral reasons. The platform survey complements visual research; it does not count as acquired component provenance. New applicable deliveries attach platform_scout to receipt v3 and run verify-v3 with --require-platform where supported.
+

@@ -3,15 +3,88 @@ import { existsSync, readFileSync, writeFileSync, statSync, readdirSync } from "
 import { join, relative, resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-const args = process.argv.slice(2); const value = n => args[args.indexOf(n)+1];
-const output=value("--out")||args[0], target=value("--base-url")||args[1], matrixPath=value("--matrix"), project=value("--project")||process.cwd(), dependencyGraph=value("--dependency-graph");
-if(!output||!target||!matrixPath){console.error(JSON.stringify({status:"ERROR",reason:"usage: browser-runner.mjs --project <dir> --base-url <url> --matrix <scenario.json> --out <run.json>"}));process.exit(2);}
-const sha256=b=>createHash("sha256").update(b).digest("hex");
-function treeFingerprint(root){const files=[];const walk=d=>{for(const n of readdirSync(d)){if(n==="node_modules"||n===".git")continue;const p=join(d,n),s=statSync(p);if(s.isDirectory())walk(p);else files.push([relative(root,p).replaceAll("\\","/"),sha256(readFileSync(p))]);}};try{walk(root);}catch{return "unknown";}return sha256(JSON.stringify(files.sort((a,b)=>a[0].localeCompare(b[0]))));}
-let playwright;try{playwright=await import("playwright");}catch{const r={schema:"lobster-runtime/v2",status:"UNAVAILABLE",target,reason:"Playwright is not installed; host must provide an equivalent browser adapter",runtime_errors:[],scenarios:[]};writeFileSync(output,JSON.stringify(r,null,2)+"\n");console.log(JSON.stringify(r));process.exit(1);}
-const matrix=JSON.parse(readFileSync(matrixPath,"utf8"));const scenarioHash=sha256(readFileSync(matrixPath));const projectFingerprint=treeFingerprint(resolve(project));let revision="working-tree";try{revision=execFileSync("git",["-C",project,"rev-parse","HEAD"],{encoding:"utf8"}).trim();}catch{}let dependencyFingerprint="unknown";if(dependencyGraph&&existsSync(dependencyGraph)){try{dependencyFingerprint=JSON.parse(readFileSync(dependencyGraph,"utf8")).fingerprint||sha256(readFileSync(dependencyGraph));}catch{dependencyFingerprint=sha256(readFileSync(dependencyGraph));}}
-const browser=await playwright.chromium.launch({headless:true});const page=await browser.newPage();let active=null;page.on("console",m=>{if(m.type()==="error"&&active)active.runtimeErrors.push(m.text());});page.on("pageerror",e=>{if(active)active.runtimeErrors.push(String(e));});page.on("requestfailed",r=>{if(active)active.networkErrors.push({url:r.url(),error:r.failure()?.errorText||"request failed"});});page.on("response",r=>{if(active&&r.status()>=400)active.networkErrors.push({url:r.url(),status:r.status()});});
-const locatorFor=l=>l?.role?page.getByRole(l.role,{name:l.name}):l?.label?page.getByLabel(l.label):l?.placeholder?page.getByPlaceholder(l.placeholder):l?.testId?page.getByTestId(l.testId):l?.css?page.locator(l.css):l?.text?page.getByText(l.text):null;
-const actualFor=async(h,a)=>{if(a.assert==="visible")return await h.isVisible();if(a.assert==="hidden")return await h.isHidden();if(a.assert==="enabled")return await h.isEnabled();if(a.assert==="disabled")return !(await h.isEnabled());if(a.assert==="focused")return await h.evaluate(e=>e===document.activeElement);if(a.assert==="text")return await h.innerText();if(a.assert==="url")return page.url();if(a.assert==="noConsoleErrors")return active.runtimeErrors.length===0;if(a.assert==="noNetworkErrors")return active.networkErrors.length===0;if(a.assert==="noHorizontalOverflow")return await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth);throw new Error(`unsupported assertion: ${a.assert}`);};
-const scenarios=[];for(const scenario of matrix.scenarios||[]){const started=new Date().toISOString(),failures=[],assertionResults=[];active={runtimeErrors:[],networkErrors:[]};try{if(scenario.viewport)await page.setViewportSize({width:scenario.viewport.width,height:scenario.viewport.height});await page.goto(target,{waitUntil:"domcontentloaded"});for(const step of scenario.steps||[]){const h=locatorFor(step.locator);if(step.action==="goto")await page.goto(new URL(step.url,target).toString(),{waitUntil:"domcontentloaded"});else if(step.action==="click")await h.click();else if(step.action==="doubleClick")await h.dblclick();else if(step.action==="fill")await h.fill(step.value??"");else if(step.action==="clear")await h.fill("");else if(step.action==="press")await(h||page).press(step.key);else if(step.action==="hover")await h.hover();else if(step.action==="focus")await h.focus();else if(step.action==="tab")await page.keyboard.press("Tab");else if(step.action==="scroll")await page.mouse.wheel(step.x||0,step.y||500);else if(step.action==="resize")await page.setViewportSize({width:step.width,height:step.height});else if(step.action==="reload")await page.reload({waitUntil:"domcontentloaded"});else if(step.action==="back")await page.goBack({waitUntil:"domcontentloaded"});else if(step.action==="forward")await page.goForward({waitUntil:"domcontentloaded"});else if(step.action==="select")await h.selectOption(step.value);else if(step.action==="drag")await h.dragTo(locatorFor(step.target));else if(step.action==="waitFor")await page.waitForTimeout(step.ms||100);else if(step.action==="screenshot")await page.screenshot({path:step.path});else failures.push(`unsupported action: ${step.action}`);}for(const a of scenario.assertions||[]){const h=locatorFor(a.locator);try{const actual=await actualFor(h,a);const expected=(a.assert==="text"||a.assert==="url")?a.value:true;const pass=a.assert==="text"?(a.contains?actual.includes(a.value):actual===a.value):actual===expected;assertionResults.push({assert:a.assert,status:pass?"PASS":"FAIL",expected,actual});if(!pass)failures.push(`${a.assert} assertion failed`);}catch(e){assertionResults.push({assert:a.assert,status:"FAIL",expected:a.value??true,actual:String(e)});failures.push(String(e));}}}catch(e){failures.push(String(e));}scenarios.push({id:scenario.id,status:failures.length||active.runtimeErrors.length||active.networkErrors.length?"FAIL":"PASS",viewport:page.viewportSize(),steps:scenario.steps||[],assertions:assertionResults,failures,runtime_errors:[...active.runtimeErrors],network_errors:[...active.networkErrors],artifacts:[],started_at:started,finished_at:new Date().toISOString()});}
-const runtimeErrors=scenarios.flatMap(s=>s.runtime_errors),networkErrors=scenarios.flatMap(s=>s.network_errors);const result={schema:"lobster-runtime/v2",status:runtimeErrors.length||networkErrors.length||scenarios.some(s=>s.status==="FAIL")?"FAIL":"PASS",target,runner:"lobster-browser",runner_version:"3.1.0",browser_version:browser.version(),run_id:`RUN-${Date.now()}`,started_at:new Date().toISOString(),finished_at:new Date().toISOString(),project_revision:revision,scenario_hash:scenarioHash,project_fingerprint:projectFingerprint,dependency_fingerprint:dependencyFingerprint,runtime_errors:runtimeErrors,network_errors:networkErrors,scenarios};writeFileSync(output,JSON.stringify(result,null,2)+"\n");await browser.close();console.log(JSON.stringify(result));process.exit(result.status==="PASS"?0:1);
+
+const args = process.argv.slice(2);
+const value = name => args[args.indexOf(name) + 1];
+const output = value("--out") || args[0];
+const target = value("--base-url") || args[1];
+const matrixPath = value("--matrix");
+const project = value("--project") || process.cwd();
+const dependencyGraph = value("--dependency-graph");
+if (!output || !target || !matrixPath) { console.error(JSON.stringify({status: "ERROR", reason: "usage: browser-runner.mjs --project <dir> --base-url <url> --matrix <scenario.json> --out <run.json>"})); process.exit(2); }
+const sha256 = bytes => createHash("sha256").update(bytes).digest("hex");
+function treeFingerprint(root) {
+  const files = [];
+  const walk = dir => { for (const name of readdirSync(dir)) { if (name === "node_modules" || name === ".git") continue; const path = join(dir, name); const stat = statSync(path); if (stat.isDirectory()) walk(path); else files.push([relative(root, path).replaceAll("\\", "/"), sha256(readFileSync(path))]); } };
+  try { walk(root); } catch { return "unknown"; }
+  return sha256(JSON.stringify(files.sort((a, b) => a[0].localeCompare(b[0]))));
+}
+let playwright;
+try { playwright = await import("playwright"); } catch {
+  const result = {schema: "lobster-runtime/v2", status: "UNAVAILABLE", target, reason: "Playwright is not installed; host must provide an equivalent browser adapter", runtime_errors: [], network_errors: [], scenarios: []};
+  writeFileSync(output, JSON.stringify(result, null, 2) + "\n"); console.log(JSON.stringify(result)); process.exit(1);
+}
+const matrix = JSON.parse(readFileSync(matrixPath, "utf8"));
+const scenarioHash = sha256(readFileSync(matrixPath));
+const projectFingerprint = treeFingerprint(resolve(project));
+let revision = "working-tree"; try { revision = execFileSync("git", ["-C", project, "rev-parse", "HEAD"], {encoding: "utf8"}).trim(); } catch {}
+let dependencyFingerprint = "unknown";
+if (dependencyGraph && existsSync(dependencyGraph)) { try { dependencyFingerprint = JSON.parse(readFileSync(dependencyGraph, "utf8")).fingerprint || sha256(readFileSync(dependencyGraph)); } catch { dependencyFingerprint = sha256(readFileSync(dependencyGraph)); } }
+const browser = await playwright.chromium.launch({headless: true});
+const page = await browser.newPage();
+let active = null;
+page.on("console", message => { if (active && message.type() === "error") active.consoleErrors.push(message.text()); });
+page.on("pageerror", error => { if (active) active.pageErrors.push(String(error)); });
+page.on("requestfailed", request => { if (active) active.networkErrors.push({url: request.url(), error: request.failure()?.errorText || "request failed"}); });
+page.on("response", response => { if (active && response.status() >= 400) active.networkErrors.push({url: response.url(), status: response.status()}); });
+const locatorFor = locator => locator?.role ? page.getByRole(locator.role, {name: locator.name}) : locator?.label ? page.getByLabel(locator.label) : locator?.placeholder ? page.getByPlaceholder(locator.placeholder) : locator?.testId ? page.getByTestId(locator.testId) : locator?.text ? page.getByText(locator.text) : locator?.css ? page.locator(locator.css) : null;
+const waitReadiness = async readiness => {
+  if (!readiness) return;
+  if (readiness.url && page.url() !== new URL(readiness.url, target).toString()) throw new Error(`readiness URL failed: ${page.url()}`);
+  if (readiness.visible) await locatorFor(readiness.visible).waitFor({state: "visible"});
+  if (readiness.domMarker) await page.locator(`[data-lobster-ready="${readiness.domMarker}"]`).waitFor({state: "visible"});
+  if (readiness.responseUrl) await page.waitForResponse(response => response.url().includes(readiness.responseUrl) && response.ok(), {timeout: readiness.timeoutMs || 5000});
+};
+const actualFor = async (handle, assertion) => {
+  if (assertion.assert === "visible") return await handle.isVisible();
+  if (assertion.assert === "hidden") return await handle.isHidden();
+  if (assertion.assert === "enabled") return await handle.isEnabled();
+  if (assertion.assert === "disabled") return !(await handle.isEnabled());
+  if (assertion.assert === "focused") return await handle.evaluate(element => element === document.activeElement);
+  if (assertion.assert === "text") return await handle.innerText();
+  if (assertion.assert === "url") return page.url();
+  if (assertion.assert === "noConsoleErrors") return active.consoleErrors.length === 0;
+  if (assertion.assert === "noPageErrors") return active.pageErrors.length === 0;
+  if (assertion.assert === "noFailedRequests") return active.networkErrors.length === 0;
+  if (assertion.assert === "noHorizontalOverflow") return await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+  throw new Error(`unsupported assertion: ${assertion.assert}`);
+};
+const scenarios = [];
+for (const scenario of matrix.scenarios || []) {
+  const started = new Date().toISOString(); const failures = []; const assertionResults = []; const artifacts = [];
+  active = {consoleErrors: [], pageErrors: [], networkErrors: []};
+  try {
+    if (scenario.viewport) await page.setViewportSize({width: scenario.viewport.width, height: scenario.viewport.height});
+    await page.goto(target, {waitUntil: "domcontentloaded"}); await waitReadiness(scenario.readiness);
+    for (const step of scenario.steps || []) {
+      const handle = locatorFor(step.locator);
+      if (step.action === "goto") await page.goto(new URL(step.url, target).toString(), {waitUntil: "domcontentloaded"});
+      else if (step.action === "click") await handle.click(); else if (step.action === "doubleClick") await handle.dblclick();
+      else if (step.action === "fill") await handle.fill(step.value ?? ""); else if (step.action === "clear") await handle.fill("");
+      else if (step.action === "press") await (handle || page).press(step.key); else if (step.action === "hover") await handle.hover();
+      else if (step.action === "focus") await handle.focus(); else if (step.action === "tab") await page.keyboard.press("Tab");
+      else if (step.action === "scroll") await page.mouse.wheel(step.x || 0, step.y || 500);
+      else if (step.action === "resize") await page.setViewportSize({width: step.width, height: step.height});
+      else if (step.action === "reload") await page.reload({waitUntil: "domcontentloaded"}); else if (step.action === "back") await page.goBack({waitUntil: "domcontentloaded"});
+      else if (step.action === "forward") await page.goForward({waitUntil: "domcontentloaded"}); else if (step.action === "select") await handle.selectOption(step.value);
+      else if (step.action === "drag") await handle.dragTo(locatorFor(step.target)); else if (step.action === "waitFor") await page.waitForTimeout(step.ms || 100);
+      else if (step.action === "screenshot") { await page.screenshot({path: step.path}); if (existsSync(step.path)) artifacts.push({kind: "screenshot", path: step.path, sha256: sha256(readFileSync(step.path))}); }
+      else failures.push(`unsupported action: ${step.action}`);
+    }
+    for (const assertion of scenario.assertions || []) { const handle = locatorFor(assertion.locator); try { const actual = await actualFor(handle, assertion); const expected = (assertion.assert === "text" || assertion.assert === "url") ? assertion.value : true; const pass = assertion.assert === "text" ? (assertion.contains ? actual.includes(assertion.value) : actual === assertion.value) : actual === expected; assertionResults.push({assert: assertion.assert, status: pass ? "PASS" : "FAIL", expected, actual}); if (!pass) failures.push(`${assertion.assert} assertion failed`); } catch (error) { assertionResults.push({assert: assertion.assert, status: "FAIL", expected: assertion.value ?? true, actual: String(error)}); failures.push(String(error)); } }
+  } catch (error) { failures.push(String(error)); }
+  scenarios.push({id: scenario.id, status: failures.length || active.consoleErrors.length || active.pageErrors.length || active.networkErrors.length ? "FAIL" : "PASS", viewport: page.viewportSize(), steps: scenario.steps || [], assertions: assertionResults, failures, console_errors: [...active.consoleErrors], page_errors: [...active.pageErrors], runtime_errors: [...active.pageErrors, ...active.consoleErrors], network_errors: [...active.networkErrors], artifacts, started_at: started, finished_at: new Date().toISOString()});
+}
+const runtimeErrors = scenarios.flatMap(item => item.runtime_errors); const networkErrors = scenarios.flatMap(item => item.network_errors);
+const result = {schema: "lobster-runtime/v2", status: runtimeErrors.length || networkErrors.length || scenarios.some(item => item.status === "FAIL") ? "FAIL" : "PASS", target, runner: "lobster-browser", runner_version: "3.1.0", browser_engine: "chromium", browser_version: browser.version(), run_id: `RUN-${Date.now()}`, started_at: new Date().toISOString(), finished_at: new Date().toISOString(), project_revision: revision, scenario_hash: scenarioHash, project_fingerprint: projectFingerprint, dependency_fingerprint: dependencyFingerprint, runtime_errors: runtimeErrors, network_errors: networkErrors, scenarios};
+writeFileSync(output, JSON.stringify(result, null, 2) + "\n"); await browser.close(); console.log(JSON.stringify(result)); process.exit(result.status === "PASS" ? 0 : 1);

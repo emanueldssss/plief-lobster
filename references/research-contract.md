@@ -36,7 +36,7 @@ Extend the Orun selection record with `discovery: {sources_consulted, queries, c
 
 ## Receipt v2
 
-Keep all v1 fields from execution.md, set `format: lobster-receipt/v2`, and add:
+Keep legacy fields from execution.md only when migrating old records. New records use `format: lobster-receipt/v3` and add:
 
 - `profile`: explicit booleans `substantial`, `expressive`, `motion`, `3d`, `heavy_effects`, derived from the brief and implementation. Do not mark a central feature false to avoid evidence.
 - `research`: `required` boolean, `artifact` file object, `sources_consulted` source names, `selected_references` names of selected/reference candidates, and `impact` change strings matching the research artifact. Research cannot be waived when substantial/expressive/motion/3d is true. Scoped exemptions require `reason`.
@@ -227,3 +227,4 @@ command navigation
 +
 keyboard accessible command palette
 ```
+

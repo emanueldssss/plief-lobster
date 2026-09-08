@@ -36,7 +36,7 @@ For substantive frontend work, load Sifr and its routed modules. If a companion 
 
 | Request | Route and stopping point |
 | --- | --- |
-| New surface or substantial redesign | Frame → inventory → concepts → research → direction/craft contract → acquire → vertical slice → craft passes → render/repair → receipt v2 |
+| New surface or substantial redesign | Frame → inventory → concepts → research → direction/craft contract → acquire → vertical slice → craft passes → render/repair → receipt v3 |
 | Existing interface feels generic | Inspect render → identify structural/design cause → repair affected stages → render again |
 | Add a named real component | Inspect native slot → Orun source verification → acquire source/package → mount and wire → exercise behavior |
 | Audit or concepts only | Produce evidence-backed critique or distinct directions; preserve the requested read-only scope |
@@ -70,7 +70,7 @@ Decide whether to preserve, extend, or replace the visual identity from the user
 
 For new visual direction, execute Sifr concept retrieval when the resolver reports it available; otherwise record concept-engine unavailability and continue with the generic research contract when allowed. Use product/job/content terms; add English search terms when helpful because the local index tokenizes English vocabulary. Do not conclude that a Portuguese request has no applicable concept after one literal empty search.
 
-The bundled discovery helper calls the actual sibling engines and retains their full responses:
+The bundled discovery helper calls an AVAILABLE resolved integration and retains its response; absent integrations return `UNAVAILABLE`:
 
 ```text
 python "<lobster-dir>/scripts/lobster.py" discover --concept "archive editorial reading hierarchy" --out "<project>/.plif/artifacts/<surface-id>/discovery.json"
@@ -113,7 +113,7 @@ For substantive builds, complete the [delivery receipt](references/execution.md#
 python "<lobster-dir>/scripts/lobster.py" verify "<project>/.plif/artifacts/<surface-id>/lobster-receipt.json" --project "<project>"
 ```
 
-This checks required records, existing files, and content hashes. It does not execute the UI or certify aesthetics, accessibility, provenance authenticity, or component use. Review those against the actual code and browser evidence. `READY_FOR_REVIEW` is document integrity, not a shipping verdict.
+This checks required records, existing files, and content hashes. It does not execute the UI or certify aesthetics, accessibility, provenance authenticity, or component use. Review those against the actual code and browser evidence. `DELIVERY_READY` is computed only by `verify-v3`; legacy `READY_FOR_REVIEW` is retained for v1/v2 compatibility.
 
 ## Completion
 
