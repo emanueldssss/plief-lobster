@@ -843,6 +843,25 @@ def v3_verify(receipt, project: Path) -> dict:
     evidence = artifact_values.get("evidence_manifest") or {}
     evidence_rows = evidence.get("evidence", []) if isinstance(evidence, dict) else []
     owners = {node.get("path") for node in graph.get("nodes", []) if isinstance(node, dict)}
+    evidence_ids = set()
+    for row in evidence_rows:
+        if not isinstance(row, dict):
+            check.issues.append("LOBSTER_EVIDENCE_ROW_INVALID")
+            continue
+        evidence_id = row.get("evidence_id", row.get("id"))
+        if not nonempty(evidence_id) or evidence_id in evidence_ids:
+            check.issues.append("LOBSTER_EVIDENCE_ID_INVALID")
+        evidence_ids.add(evidence_id)
+        artifact_path = row.get("path") or row.get("artifact")
+        if not nonempty(artifact_path) or not isinstance(row.get("sha256"), str) or not SHA256.fullmatch(row.get("sha256", "")):
+            check.issues.append(f"LOBSTER_EVIDENCE_HASH_INVALID:{evidence_id}")
+        else:
+            try:
+                actual = hashlib.sha256((project / artifact_path).read_bytes()).hexdigest()
+                if actual != row["sha256"].lower():
+                    check.issues.append(f"LOBSTER_EVIDENCE_ARTIFACT_STALE:{evidence_id}")
+            except OSError:
+                check.issues.append(f"LOBSTER_EVIDENCE_ARTIFACT_MISSING:{evidence_id}")
     for node in graph.get("nodes", []) if isinstance(graph.get("nodes"), list) else []:
         if isinstance(node, dict) and nonempty(node.get("path")):
             try:
@@ -853,11 +872,27 @@ def v3_verify(receipt, project: Path) -> dict:
                 check.issues.append(f"LOBSTER_DEPENDENCY_NODE_MISSING:{node['path']}")
     for row in evidence_rows:
         if isinstance(row, dict):
-            if row.get("scenario_hash") != run.get("scenario_hash") or row.get("dependency_fingerprint") != graph.get("fingerprint"):
+            if row.get("phase", "after") != "before" and (row.get("scenario_hash") != run.get("scenario_hash") or row.get("dependency_fingerprint") != graph.get("fingerprint")):
                 check.issues.append(f"LOBSTER_EVIDENCE_STALE:{row.get('evidence_id', row.get('id', 'unknown'))}")
             for owner in row.get("owners", []):
                 if owner not in owners:
                     check.issues.append(f"LOBSTER_EVIDENCE_OWNER_OUTSIDE_CLOSURE:{owner}")
+    review = artifact_values.get("craft_review") or {}
+    evidence_ref = receipt.get("evidence_manifest") or {}
+    evidence_path = evidence_ref.get("path") if isinstance(evidence_ref, dict) else None
+    if evidence_path:
+        try:
+            evidence_hash = hashlib.sha256((project / evidence_path).read_bytes()).hexdigest()
+            if review.get("evidence_manifest_hash") != evidence_hash or review.get("review_input_hash") != evidence_hash:
+                check.issues.append("LOBSTER_REVIEW_INPUT_HASH_STALE")
+        except OSError:
+            check.issues.append("LOBSTER_REVIEW_INPUT_HASH_MISSING")
+    ledger = artifact_values.get("repair_ledger") or {}
+    for repair in ledger.get("repairs", []) if isinstance(ledger.get("repairs"), list) else []:
+        for field in ("before_evidence", "after_evidence"):
+            for evidence_id in repair.get(field, []) if isinstance(repair, dict) and isinstance(repair.get(field), list) else []:
+                if evidence_id not in evidence_ids:
+                    check.issues.append(f"LOBSTER_REPAIR_EVIDENCE_UNKNOWN:{evidence_id}")
     results = [verify_record(receipt, artifact_issues.get("profile", [])),
                verify_source(artifact_values, artifact_issues.get("research", []) + artifact_issues.get("platform_scout", []) + artifact_issues.get("provenance_lock", [])),
                verify_implementation_stage(artifact_values, artifact_issues.get("dependency_graph", []) + artifact_issues.get("provenance_lock", [])),
@@ -1009,7 +1044,7 @@ def main() -> int:
         else:
             result = verify(record, args.project, args.require_platform)
         print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 0 if result["status"] == "READY_FOR_REVIEW" else 1
+        return 0 if (args.command != "verify-v3" and result["status"] in ("READY_FOR_REVIEW", "DELIVERY_READY")) or (args.command == "verify-v3" and result["status"] == "DELIVERY_READY") else 1
     except (OSError, ValueError, TypeError) as exc:
         print(json.dumps({"status": "ERROR", "reason": str(exc)}, ensure_ascii=False))
         return 2

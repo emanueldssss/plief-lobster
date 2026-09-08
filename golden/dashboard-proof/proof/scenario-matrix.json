@@ -75,7 +75,7 @@
       "steps": [
         {
           "action": "goto",
-          "url": "/?fallback=1"
+          "url": "/"
         }
       ],
       "assertions": [
@@ -86,7 +86,10 @@
           },
           "value": "Fallback motion path"
         }
-      ]
+      ],
+      "capability_overrides": {
+        "reduced_motion": "reduce"
+      }
     }
   ]
 }

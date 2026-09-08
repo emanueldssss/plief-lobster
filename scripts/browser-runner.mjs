@@ -64,6 +64,7 @@ for (const scenario of matrix.scenarios || []) {
   const started = new Date().toISOString(); const failures = []; const assertionResults = []; const artifacts = [];
   active = {consoleErrors: [], pageErrors: [], networkErrors: []};
   try {
+    if (scenario.capability_overrides?.reduced_motion) await page.emulateMedia({reducedMotion: scenario.capability_overrides.reduced_motion === "reduce" ? "reduce" : "no-preference"});
     if (scenario.viewport) await page.setViewportSize({width: scenario.viewport.width, height: scenario.viewport.height});
     await page.goto(target, {waitUntil: "domcontentloaded"}); await waitReadiness(scenario.readiness);
     for (const step of scenario.steps || []) {

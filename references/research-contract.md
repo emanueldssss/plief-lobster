@@ -47,7 +47,7 @@ Keep legacy fields from execution.md only when migrating old records. New record
 - `3d_evidence`: rows with `asset_source`, `model_format`, `texture_sizes`, `renderer_dpr`, `lighting`, `camera`, `performance_observation`, `mobile_fallback`, `evidence_ids` to visual and interaction observations. Values are descriptive strings including measured units and context.
 - `performance_budget`: required for heavy effects or 3D; strings `js_cost`, `asset_weight`, `texture_memory`, `video`, `draw_calls`, `animation_work`, `layout_work`, `measured_result`, `fallback`, plus `evidence_ids` to check evidence. Compare observed cost against the agreed budget; justify unused dimensions.
 
-Legacy v1 is still readable and returns a legacy contract annotation. It does not satisfy v2 substantial-work delivery. Migrate by performing research/reviews, recording their observations and hashing current artifacts; changing only the format string fails. File edits invalidate affected evidence, including research artifact and impact owners. Matching hashes attest consistency, not truth or completeness of the dependency graph.
+Legacy v1 is still readable and returns a legacy contract annotation. It does not satisfy v3 substantial-work delivery. Migrate by performing research/reviews, recording their observations and hashing current artifacts; changing only the format string fails. File edits invalidate affected evidence, including research artifact and impact owners. Matching hashes attest consistency, not truth or completeness of the dependency graph.
 
 
 ## Mandatory Research Triggers
@@ -227,4 +227,5 @@ command navigation
 +
 keyboard accessible command palette
 ```
+
 

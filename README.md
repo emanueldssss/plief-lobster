@@ -14,6 +14,7 @@ From this folder run `python scripts/lobster.py --help` for commands. Use [resea
 
 The entrypoint routes domain references. `scripts/lobster.py verify-v3` computes the proof state from the indexed artifacts; `scripts/browser-runner.mjs` executes the closed scenario matrix when Playwright is provided; `scripts/dependency-graph.mjs` emits a deterministic local import graph. `evals/cases` contains behavioral scenarios for an agent to execute; unit tests do not establish visual skill effectiveness.
 
-V2 retains legacy v1 receipt reading, but substantial builds require v2 gates. The CLI does not browse, install components, render, certify licensing or judge beauty. Human/agent inspection of the actual experience remains necessary. No third-party runtime dependency was added.
+v3 is current; v2 and v1 are LEGACY receipt reading, but substantial builds require v2 gates. The CLI does not browse, install components, render, certify licensing or judge beauty. Human/agent inspection of the actual experience remains necessary. No third-party runtime dependency was added.
 
 License: Apache-2.0. See LICENSE and NOTICE.md.
+

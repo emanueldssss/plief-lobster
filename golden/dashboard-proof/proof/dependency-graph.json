@@ -7,7 +7,7 @@
   "nodes": [
     {
       "path": "app.js",
-      "sha256": "45bd057378b2c82ab0422a0994aa6928a8dc94134aca0e1e80939854a33761c7"
+      "sha256": "0aa0b6a94fa9f77b230cebfe83092868aa10b29c5e304931702ddc67e893add1"
     },
     {
       "path": "index.html",
@@ -34,8 +34,13 @@
     {
       "from": "styles.css",
       "to": "tokens.css"
+    },
+    {
+      "from": "styles.css",
+      "to": "tokens.css"
     }
   ],
+  "unresolved": [],
   "confidence": "FULL",
-  "fingerprint": "914612956f3a1f3faff7cd008d873ee1c311655f5f25cde89bb677a993b28c5f"
+  "fingerprint": "61a419e3bbe592f8a7dc699a9fa87e11ea31f98f45f48611fcc73c0cbf93dabc"
 }

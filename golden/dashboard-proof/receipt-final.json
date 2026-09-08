@@ -20,23 +20,23 @@
   },
   "dependency_graph": {
     "path": "proof/dependency-graph.json",
-    "sha256": "fc61b92ab2a98b5c7eda242791bbe6c33efb95b4ce47f33baa7d77bc2a14015f"
+    "sha256": "90534ede99eedb723dfcb8651967af5d35897cfacb217d5758d3787809692bc7"
   },
   "scenario_matrix": {
     "path": "proof/scenario-matrix.json",
-    "sha256": "63e7893cd9fca5d4bfc97b8e65adc1cdd9b2c0991c6892d583488d12e156be8c"
+    "sha256": "34a6b02ea7353b1ff485922f4f6a621e7b70abcf0aff69a4a6f78b03a1923d06"
   },
   "scenario_run": {
     "path": "proof/scenario-run.json",
-    "sha256": "ba7c2fefcd6c5729fa57a1c61e5a981b6e1026c19bb82d043a70372e0d0c1c1d"
+    "sha256": "d4a74be8f6369b239fa40b7a15c8b057d1794ae4336cceb0050581f6c3905948"
   },
   "evidence_manifest": {
     "path": "proof/evidence.json",
-    "sha256": "30d6024dfb220d737b4db82528573443f27f30a3a371a292ba922c7a423d5530"
+    "sha256": "54080fe50d2d59f0e2c4164fa63e7b01a167e52286190f96d59d022b7dbef9c4"
   },
   "craft_review": {
     "path": "proof/craft.json",
-    "sha256": "2c5fdadb79b6be5669f4e6e5cac40f0007e4127e46828933adb5288fd1cf0891"
+    "sha256": "1a27ccdb46c1bdc07926594828ecfaf8264e4de198666703fe845e88656f5ef0"
   },
   "repair_ledger": {
     "path": "proof/repair.json",

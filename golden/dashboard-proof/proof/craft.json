@@ -5,7 +5,7 @@
   "reviewer_mode": "INDEPENDENT_CONTEXT",
   "started_at": "2026-09-08T22:44:00Z",
   "finished_at": "2026-09-08T22:44:01Z",
-  "review_input_hash": "final",
-  "evidence_manifest_hash": "final",
+  "review_input_hash": "54080fe50d2d59f0e2c4164fa63e7b01a167e52286190f96d59d022b7dbef9c4",
+  "evidence_manifest_hash": "54080fe50d2d59f0e2c4164fa63e7b01a167e52286190f96d59d022b7dbef9c4",
   "findings": []
 }

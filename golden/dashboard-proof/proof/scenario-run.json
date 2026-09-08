@@ -6,13 +6,13 @@
   "runner_version": "3.1.0",
   "browser_engine": "chromium",
   "browser_version": "153.0.8010.12",
-  "run_id": "RUN-1788907790386",
-  "started_at": "2026-09-08T22:49:50.386Z",
-  "finished_at": "2026-09-08T22:49:50.386Z",
-  "project_revision": "9e70799017f2ea9b96b0d6276da42408997405cf",
-  "scenario_hash": "63e7893cd9fca5d4bfc97b8e65adc1cdd9b2c0991c6892d583488d12e156be8c",
-  "project_fingerprint": "d827f63826c4549978a2dd9bbfcebf54f18e4628bf7145815dc5b16f5ba0c72d",
-  "dependency_fingerprint": "914612956f3a1f3faff7cd008d873ee1c311655f5f25cde89bb677a993b28c5f",
+  "run_id": "RUN-1788909171903",
+  "started_at": "2026-09-08T23:12:51.903Z",
+  "finished_at": "2026-09-08T23:12:51.903Z",
+  "project_revision": "d001d899002edc3ee3a426899928dc9392b12548",
+  "scenario_hash": "34a6b02ea7353b1ff485922f4f6a621e7b70abcf0aff69a4a6f78b03a1923d06",
+  "project_fingerprint": "cbe0e9bd0cb2143b4e8c7965a105cafe61aef7d6d6c4f30b13eb4ca49a632032",
+  "dependency_fingerprint": "61a419e3bbe592f8a7dc699a9fa87e11ea31f98f45f48611fcc73c0cbf93dabc",
   "runtime_errors": [],
   "network_errors": [],
   "scenarios": [
@@ -65,8 +65,8 @@
           "sha256": "5176e2f5772053d8701c2739209620afb0c1f6daef59d44fe20056fbe685c587"
         }
       ],
-      "started_at": "2026-09-08T22:49:50.092Z",
-      "finished_at": "2026-09-08T22:49:50.169Z"
+      "started_at": "2026-09-08T23:12:51.507Z",
+      "finished_at": "2026-09-08T23:12:51.629Z"
     },
     {
       "id": "dialog-focus-restoration",
@@ -117,8 +117,8 @@
           "sha256": "818bf5cf294b6f8d8516926434bf50f367183371a62f09101677e586e6fd0af4"
         }
       ],
-      "started_at": "2026-09-08T22:49:50.169Z",
-      "finished_at": "2026-09-08T22:49:50.344Z"
+      "started_at": "2026-09-08T23:12:51.629Z",
+      "finished_at": "2026-09-08T23:12:51.869Z"
     },
     {
       "id": "forced-motion-fallback",
@@ -130,7 +130,7 @@
       "steps": [
         {
           "action": "goto",
-          "url": "/?fallback=1"
+          "url": "/"
         }
       ],
       "assertions": [
@@ -147,8 +147,8 @@
       "runtime_errors": [],
       "network_errors": [],
       "artifacts": [],
-      "started_at": "2026-09-08T22:49:50.344Z",
-      "finished_at": "2026-09-08T22:49:50.386Z"
+      "started_at": "2026-09-08T23:12:51.869Z",
+      "finished_at": "2026-09-08T23:12:51.903Z"
     }
   ]
 }
