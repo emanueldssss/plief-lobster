@@ -69,6 +69,8 @@ FRAME → NATIVE INVENTORY → PLATFORM CAPABILITY SCOUT → CONCEPT RETRIEVAL �
 
 The stage table above defines ownership; this sequence defines the v2 handoffs. Use [research-contract.md](research-contract.md) for v2 records and commands. Keep Sifr/Orun authority, native-first inventory, real-source acquisition, use-site proof, hashes and access-limit honesty. Search is mandatory for substantial work and the listed expressive triggers, including when native code exists: assess whether it meets the visual goal and compare relevant external precedent before deciding.
 
+Code is written in English — identifiers, file names, comments, test names — whatever language the conversation is in. User-facing copy follows the product's language instead. See the Language section of SKILL.md.
+
 Normalize acquired tokens, radii, spacing, type, icon language, motion durations/easing/springs/stagger, responsive behavior, content, state, accessibility and theme. Preserve the defining source mechanism. Source acquisition is not permission to ship its unmodified demo defaults.
 
 The delivery-receipt section above describes the preserved legacy core. New substantial work uses lobster-receipt/v3 and all applicable research/craft extensions. A legacy READY_FOR_REVIEW only reports legacy record integrity.

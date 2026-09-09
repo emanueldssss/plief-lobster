@@ -23,7 +23,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 BUILTIN = PACKAGE_ROOT.parent
 ROOT = PACKAGE_ROOT
 SHA256 = re.compile(r"[0-9a-f]{64}", re.IGNORECASE)
-VERSION = "3.1.3"
+VERSION = "3.1.4"
 
 
 class ProjectPathError(ValueError):

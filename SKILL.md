@@ -26,7 +26,17 @@ A component catalog that is never queried provides no value. When a real compone
 
 Close the gap between a design concept, a component recommendation, and a working interface. The deliverable is the implemented experience. A named concept, search result, installed package, or screenshot alone does not demonstrate completion.
 
-Work in the user's language. Ambition means a committed composition, useful behavior, and precise execution. It does not mean adding effects or dependencies to every surface.
+Ambition means a committed composition, useful behavior, and precise execution. It does not mean adding effects or dependencies to every surface.
+
+## Language
+
+Talk to the user in the user's language. **Write code in English.** These are different decisions and a request written in Portuguese, Spanish, French or any other language never changes the second one.
+
+English applies to every identifier the codebase carries: variables, functions, components, hooks, types, interfaces, constants, enum members, CSS class names and custom properties, file and directory names, test names, branch names and commit messages, plus code comments and JSDoc. `useReducedMotion`, not `usePreferenciaDeMovimentoReduzido`. `SHAPE_PATHS`, not `CAMINHOS_DAS_FORMAS`. `ShapeDemo`, not `FormaDemo`.
+
+The exception is content, not code: user-facing copy — labels, headings, button text, empty states, error messages, `alt` text, metadata — is written in whatever language the product serves, and that is usually the user's. In an internationalized project the keys stay English and the translated strings live in the locale files. Domain vocabulary with no accepted English equivalent (a legal or fiscal term such as `cpf`, `nfe`, `pix`) stays in its original form; it is a proper noun, not a translation failure.
+
+When editing an existing codebase, match what is already there. A project whose identifiers are consistently in another language is not corrected as a side effect of an unrelated task — mixing two languages in one file is worse than either language used consistently. Say so and let the user decide.
 
 ## Ownership and entry
 

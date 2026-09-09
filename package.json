@@ -1,6 +1,6 @@
 {
   "name": "plief-lobster",
-  "version": "3.1.3",
+  "version": "3.1.4",
   "description": "Coordinates frontend reference acquisition and closed-loop proof verification with physical evidence authority.",
   "license": "Apache-2.0",
   "author": "emanueldssss",
@@ -58,6 +58,7 @@
   },
   "scripts": {
     "test": "python -m unittest discover -s tests -v",
-    "validate": "python scripts/lobster.py --help"
+    "validate": "python scripts/lobster.py --help",
+    "prepack": "node -e \"const fs=require('fs'),path=require('path');(function w(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory()){if(e.name==='__pycache__'||e.name==='node_modules'||e.name==='.git'){if(e.name==='__pycache__')fs.rmSync(p,{recursive:true,force:true});continue}w(p)}else if(p.endsWith('.pyc')||p.endsWith('.pyo'))fs.rmSync(p,{force:true})}})(process.cwd())\""
   }
 }
