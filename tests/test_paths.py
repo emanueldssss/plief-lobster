@@ -198,6 +198,89 @@ class PathAuthorityTests(unittest.TestCase):
         self.assertEqual(payload.get("operation"), "resolve-project-root")
 
 
+class RootSpellingInvarianceTests(unittest.TestCase):
+    """Same physical root -> same containment decision, however the root is spelled.
+
+    Regression for the Windows CI failure at commit d4fd42a: `contain()` resolved the
+    candidate but compared it against the root exactly as given. A root spelled
+    non-canonically - a junction or reparse point, or an 8.3 short name such as the
+    `RUNNER~1` temporary directories GitHub Actions hands out on Windows - therefore
+    compared unequal to itself, and a legitimate project-relative path was refused as
+    an escape. Locally the temp directory happened to be canonical, so the suite passed
+    and only the Windows CI legs failed.
+    """
+
+    def setUp(self):
+        self.base = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.base, ignore_errors=True)
+        self.real = self.base / "realroot"
+        (self.real / "src").mkdir(parents=True)
+        (self.real / "index.html").write_text("<h1>hi</h1>", encoding="utf-8")
+        (self.real / "src" / "app.tsx").write_text("export default 1", encoding="utf-8")
+        self.outside = self.base / "outside"
+        self.outside.mkdir()
+        (self.outside / "secret.txt").write_text("SECRET", encoding="utf-8")
+
+    def alias(self):
+        """A junction pointing at the real root, i.e. a non-canonical spelling of it."""
+        link = self.base / "aliasroot"
+        try:
+            subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(self.real)],
+                           capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            self.skipTest("cannot create a junction in this environment")
+        self.assertNotEqual(str(link), str(link.resolve()), "the alias must be non-canonical")
+        return link
+
+    def roots(self):
+        """The same physical root, spelled every way a caller might supply it."""
+        return {
+            "raw": self.real,
+            "resolved": self.real.resolve(),
+            "project_root": lobster.project_root(self.real),
+            "trailing-separator": Path(str(self.real) + os.sep),
+            "dot-segment": self.real / "." ,
+            "alias": self.alias(),
+        }
+
+    def test_accepted_paths_are_accepted_through_every_spelling(self):
+        for label, root in self.roots().items():
+            for relative in ("index.html", "src/app.tsx", "src\\app.tsx"):
+                with self.subTest(root=label, relative=relative):
+                    path, reason = lobster.contain(root, relative)
+                    self.assertIsNotNone(path, f"{label}: refused {relative!r} ({reason})")
+                    self.assertTrue(path.is_file())
+
+    def test_refused_paths_stay_refused_through_every_spelling(self):
+        refused = [str(self.outside / "secret.txt"), "../outside/secret.txt",
+                   "..\\outside\\secret.txt", "/etc/passwd", "C:\\Windows\\system32",
+                   "src/../../outside/secret.txt", ""]
+        for label, root in self.roots().items():
+            for relative in refused:
+                with self.subTest(root=label, relative=relative):
+                    path, reason = lobster.contain(root, relative)
+                    self.assertIsNone(path, f"{label}: accepted {relative!r}")
+                    self.assertIsNotNone(reason)
+
+    def test_every_spelling_reaches_the_same_physical_file(self):
+        results = {label: lobster.contain(root, "src/app.tsx")[0]
+                   for label, root in self.roots().items()}
+        canonical = {str(path.resolve()) for path in results.values() if path is not None}
+        self.assertEqual(len(canonical), 1, f"spellings disagreed on the target: {results}")
+
+    def test_a_symlinked_escape_is_still_refused_through_an_alias_root(self):
+        """The alias fix must not weaken containment: resolution still catches escapes."""
+        alias = self.alias()
+        try:
+            subprocess.run(["cmd", "/c", "mklink", "/J", str(self.real / "escape"), str(self.outside)],
+                           capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            self.skipTest("cannot create a junction in this environment")
+        path, reason = lobster.contain(alias, "escape/secret.txt")
+        self.assertIsNone(path, "a link out of the project must still escape")
+        self.assertEqual(reason, "escapes")
+
+
 class DependencyGraphPathTests(unittest.TestCase):
     """dependency-graph.mjs must never emit a node outside the project."""
 

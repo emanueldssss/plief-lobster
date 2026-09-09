@@ -60,6 +60,14 @@ def contain(root: Path, raw) -> tuple[Path | None, str | None]:
     guards; `.resolve()` then follows symlinks, so a link that points out of the
     project is caught by the final containment test rather than by its spelling.
 
+    Both sides of that final test must be canonical. The candidate is resolved, so
+    a root given in a non-canonical spelling - a junction or reparse point, an 8.3
+    short name such as the `RUNNER~1` temporary directories on GitHub Actions
+    Windows, or any other alias - would otherwise compare unequal to itself and a
+    legitimate path would be refused as an escape. `project_root()` remains the only
+    authority that ESTABLISHES a root; this only keeps the comparison self-consistent,
+    and it costs nothing when the root is already canonical, which is the runtime case.
+
     The refusal rules are the UNION of POSIX and Windows rules on both hosts
     (invariant I10): a drive prefix, a leading separator of either kind and a
     `..` segment split on either separator are refused everywhere. A record that
@@ -71,7 +79,14 @@ def contain(root: Path, raw) -> tuple[Path | None, str | None]:
     if not_relative(text):
         return None, "not-relative"
     candidate = (root / text).resolve()
-    return (candidate, None) if candidate.is_relative_to(root) else (None, "escapes")
+    if candidate.is_relative_to(root):
+        return candidate, None
+    # The root was spelled non-canonically; compare against the same physical root.
+    try:
+        canonical = root.resolve()
+    except OSError:
+        return None, "escapes"
+    return (candidate, None) if candidate.is_relative_to(canonical) else (None, "escapes")
 
 
 def not_relative(text: str) -> bool:

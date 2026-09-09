@@ -28,15 +28,15 @@
   },
   "scenario_run": {
     "path": "proof/scenario-run.json",
-    "sha256": "f7d8f27896fa4adf0867f57957d43b984b9c1bce1b913e3b9c9120946105710c"
+    "sha256": "19639ef0c72e1fc06c6aa57a23449e24f65d2c8efd1bd7008051c2a1d78dcd39"
   },
   "evidence_manifest": {
     "path": "proof/evidence.json",
-    "sha256": "643a3612b6495517acbe5d1485c2c2af93bdbfe2cc77f526186ed3872ff0909a"
+    "sha256": "547e52934cf41ce07f7ad5fa905dbce94a315e88cc3a89e58cb81c009ae9c46c"
   },
   "craft_review": {
     "path": "proof/craft.json",
-    "sha256": "a3c354958d9e1bd0b5a961424050117a036be86969d7c09a6f5904137d61e9d4"
+    "sha256": "5b5f173949b7d8c8f095e2e6db1ebdbd224a4836ccfca810c19367d87c62eb3f"
   },
   "repair_ledger": {
     "path": "proof/repair.json",

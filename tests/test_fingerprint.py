@@ -170,6 +170,51 @@ class SpecValidationTests(unittest.TestCase):
         source = dict(self.BASE, excluded_paths=["artifacts", "proof", "src"])
         self.assertTrue(lobster.fingerprint_spec_issues(source, base, receipt))
 
+    def test_receipt_exclusion_holds_through_a_non_canonical_root(self):
+        """Regression for the Windows CI failure at d4fd42a.
+
+        The receipt exclusion is proved by reading the file under the target root and
+        matching it against the receipt under verification. When the root was spelled
+        non-canonically the containment step refused the read outright, so the proof
+        could never be attempted and a valid exclusion was reported as
+        LOBSTER_FINGERPRINT_SCOPE_TOO_NARROW. Every refusal below must survive the fix.
+        """
+        import shutil, subprocess, tempfile
+        base = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, base, ignore_errors=True)
+        real = base / "realroot"
+        real.mkdir()
+        receipt = {"format": "lobster-receipt/v3", "surface": "x", "revision": "r"}
+        (real / "receipt-final.json").write_text(json.dumps(receipt), encoding="utf-8")
+        (real / "decoy.json").write_text(json.dumps({"not": "the receipt"}), encoding="utf-8")
+
+        alias = base / "aliasroot"
+        try:
+            subprocess.run(["cmd", "/c", "mklink", "/J", str(alias), str(real)],
+                           capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            self.skipTest("cannot create a junction in this environment")
+        self.assertNotEqual(str(alias), str(alias.resolve()))
+
+        spec = dict(self.BASE, excluded_paths=["artifacts", "proof", "receipt-final.json"])
+        for label, root in (("canonical", real), ("non-canonical alias", alias)):
+            with self.subTest(root=label):
+                self.assertEqual(lobster.fingerprint_spec_issues(spec, root, receipt), [],
+                                 f"{label}: the receipt under verification must be excludable")
+
+        # every refusal still holds, through the aliased root too
+        for label, bad_spec, bad_receipt in (
+                ("decoy.json", dict(self.BASE, excluded_paths=["artifacts", "proof", "decoy.json"]), receipt),
+                ("different receipt content", spec, {"a": "different receipt"}),
+                ("src", dict(self.BASE, excluded_paths=["artifacts", "proof", "src"]), receipt),
+                ("traversal", dict(self.BASE, excluded_paths=["artifacts", "proof", "../outside"]), receipt),
+                ("absolute", dict(self.BASE, excluded_paths=["artifacts", "proof", str(real / "receipt-final.json")]), receipt)):
+            with self.subTest(refused=label):
+                self.assertTrue(lobster.fingerprint_spec_issues(bad_spec, alias, bad_receipt),
+                                f"{label} must stay refused")
+        self.assertTrue(lobster.fingerprint_spec_issues(spec, None, receipt),
+                        "without a root the claim cannot be proved, so it is refused")
+
     def test_algorithm_and_policy_substitution_is_refused(self):
         for field, value in (("algorithm", "md5"), ("symlink_policy", "follow"),
                              ("schema", "lobster-fingerprint/v0")):
