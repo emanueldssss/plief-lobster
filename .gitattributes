@@ -1,0 +1,11 @@
+# The project fingerprint (lobster-fingerprint/v1) hashes file BYTES. Any end-of-line
+# conversion on checkout would change those bytes and invalidate a valid receipt on the
+# other platform, so this repository stores and checks out every file verbatim.
+* -text
+
+# Belt and braces for the trees a receipt hashes directly.
+golden/** -text
+schemas/** -text
+scripts/** -text
+*.png binary
+*.json -text

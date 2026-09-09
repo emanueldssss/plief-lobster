@@ -12,8 +12,9 @@ from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
+import stat as stat_module
 import subprocess
 import sys
 from urllib.parse import urlparse
@@ -22,6 +23,71 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 BUILTIN = PACKAGE_ROOT.parent
 ROOT = PACKAGE_ROOT
 SHA256 = re.compile(r"[0-9a-f]{64}", re.IGNORECASE)
+VERSION = "3.1.3"
+
+
+class ProjectPathError(ValueError):
+    """A filesystem error that names the operation and the path it happened on."""
+
+    def __init__(self, operation: str, path: str, reason: str):
+        super().__init__(f"{operation}: {path}: {reason}")
+        self.operation, self.path, self.reason = operation, path, reason
+
+
+def project_root(project) -> Path:
+    """The single authority for the target root. Resolved exactly once, per invariant I1."""
+    raw = str(project)
+    try:
+        root = Path(project).expanduser().resolve(strict=True)
+    except OSError as exc:
+        raise ProjectPathError("resolve-project-root", raw, exc.strerror or str(exc)) from exc
+    if not root.is_dir():
+        raise ProjectPathError("resolve-project-root", raw, "project must be a directory")
+    return root
+
+
+def contain(root: Path, raw) -> tuple[Path | None, str | None]:
+    """The single containment decision for every record-supplied path.
+
+    Returns (resolved_path, None) when the path is project-relative and stays
+    inside `root`, else (None, reason) where reason is "empty", "not-relative"
+    or "escapes".
+
+    Record paths are data written by an agent, so an absolute path, a drive
+    letter or a `..` segment is a containment failure, never something to
+    normalise away (invariant I7). `Path.__truediv__` silently discards the left
+    side when the right side is absolute, which is exactly the escape this
+    guards; `.resolve()` then follows symlinks, so a link that points out of the
+    project is caught by the final containment test rather than by its spelling.
+
+    The refusal rules are the UNION of POSIX and Windows rules on both hosts
+    (invariant I10): a drive prefix, a leading separator of either kind and a
+    `..` segment split on either separator are refused everywhere. A record that
+    one host accepts is therefore accepted by the other.
+    """
+    if not isinstance(raw, str) or not raw.strip():
+        return None, "empty"
+    text = raw.strip()
+    if not_relative(text):
+        return None, "not-relative"
+    candidate = (root / text).resolve()
+    return (candidate, None) if candidate.is_relative_to(root) else (None, "escapes")
+
+
+def not_relative(text: str) -> bool:
+    """Platform-independent rejection of non-project-relative spellings (I10)."""
+    return bool(
+        re.match(r"^[a-zA-Z]:", text)
+        or text.startswith(("/", "\\"))
+        or PureWindowsPath(text).is_absolute()
+        or PurePosixPath(text).is_absolute()
+        or ".." in re.split(r"[\\/]", text)
+    )
+
+
+def contained_path(root: Path, raw) -> Path | None:
+    """Boolean-shaped wrapper over `contain` for callers that do not need the reason."""
+    return contain(root, raw)[0]
 
 
 def _integration_registry() -> dict:
@@ -89,7 +155,7 @@ def resolve_integrations() -> dict:
 
 def doctor(project: Path | None = None) -> dict:
     manifest_ok = False
-    try: manifest_ok = read_json(PACKAGE_ROOT / "manifest.json").get("version") == "3.1.0"
+    try: manifest_ok = read_json(PACKAGE_ROOT / "manifest.json").get("version") == VERSION
     except (OSError, ValueError, AttributeError): pass
     schema_paths = list((PACKAGE_ROOT / "schemas").glob("*.json"))
     schemas_ok = bool(schema_paths)
@@ -99,11 +165,12 @@ def doctor(project: Path | None = None) -> dict:
     browser = PACKAGE_ROOT / "scripts" / "browser-runner.mjs"
     dependency = PACKAGE_ROOT / "scripts" / "dependency-graph.mjs"
     inspector = PACKAGE_ROOT / "scripts" / "inspect-runtime.mjs"
+    contain_module = PACKAGE_ROOT / "scripts" / "lib" / "contain.mjs"
     references_ok = (PACKAGE_ROOT / "references").is_dir()
     integrations = resolve_integrations()
-    core_ready = manifest_ok and schemas_ok and browser.is_file() and dependency.is_file() and inspector.is_file() and references_ok
+    core_ready = manifest_ok and schemas_ok and browser.is_file() and dependency.is_file() and inspector.is_file() and contain_module.is_file() and references_ok
     return {"status": "READY" if core_ready else "BLOCKING",
-            "core": {"manifest": "PASS" if manifest_ok else "FAIL", "schemas": "PASS" if schemas_ok else "FAIL", "cli": "PASS", "runtime_inspector": "READY" if inspector.is_file() else "MISSING", "browser_adapter": "AVAILABLE" if browser.is_file() else "MISSING", "dependency_engine": "READY" if dependency.is_file() else "MISSING", "references": "PASS" if references_ok else "FAIL"},
+            "core": {"manifest": "PASS" if manifest_ok else "FAIL", "schemas": "PASS" if schemas_ok else "FAIL", "cli": "PASS", "runtime_inspector": "READY" if inspector.is_file() else "MISSING", "browser_adapter": "AVAILABLE" if browser.is_file() else "MISSING", "dependency_engine": "READY" if dependency.is_file() else "MISSING", "path_containment": "SHARED" if contain_module.is_file() else "MISSING", "references": "PASS" if references_ok else "FAIL"},
             "integrations": integrations,
             "available_workflow": ["profile", "plan", "scout", "browser verification", "craft verification"],
             "unavailable_enhancements": [f"{name}-assisted {item['capability']}" for name, item in integrations.items() if item["status"] != "AVAILABLE"]}
@@ -153,10 +220,8 @@ def discover(concept: str | None, capability: str | None, framework: str = "") -
                 "integrations": integrations, "results": results}
 
 
-def verify_implementation(receipt, project: Path) -> dict:
-    root = project.resolve(strict=True)
-    if not root.is_dir():
-        raise ValueError("project must be a directory")
+def verify_implementation(receipt, project: Path, root: Path | None = None) -> dict:
+    root = root if root is not None else project_root(project)
     issues: list[str] = []
 
     def require(condition, message):
@@ -175,13 +240,11 @@ def verify_implementation(receipt, project: Path) -> dict:
         if not text(raw) or not isinstance(digest, str) or not SHA256.fullmatch(digest):
             issues.append(f"{label}: nonempty path and SHA-256 required")
             return None
-        relative = Path(raw)
-        # Reject both Windows and POSIX absolute/traversal forms on either host.
-        if relative.is_absolute() or re.match(r"^[a-zA-Z]:", raw) or raw.startswith(("\\", "/")) or ".." in raw.replace("\\", "/").split("/"):
+        path, reason = contain(root, raw)
+        if reason == "not-relative":
             issues.append(f"{label}: path must stay project-relative")
             return None
-        path = (root / relative).resolve()
-        if not path.is_relative_to(root):
+        if path is None:
             issues.append(f"{label}: resolved path escapes project")
             return None
         if not path.is_file():
@@ -323,10 +386,10 @@ def web_url(value):
 
 
 class RecordCheck:
-    def __init__(self, project):
-        self.root = Path(project).resolve(strict=True)
-        if not self.root.is_dir():
-            raise ValueError("project must be a directory")
+    def __init__(self, project, root: Path | None = None):
+        # I1: `root` is an already-resolved target root threaded down from the
+        # entry point. Only an entry point may call project_root().
+        self.root = root if root is not None else project_root(project)
         self.issues = []
 
     def require(self, condition, message):
@@ -362,10 +425,10 @@ class RecordCheck:
         raw, digest = value.get("path"), value.get("sha256")
         if not self.require(nonempty(raw) and isinstance(digest, str) and SHA256.fullmatch(digest), f"{label}: invalid path/hash"):
             return None
-        if not self.require(not raw.startswith(("/", "\\")) and not re.match(r"^[a-zA-Z]:", raw) and ".." not in raw.replace("\\", "/").split("/"), f"{label}: project-relative path required"):
+        path, reason = contain(self.root, raw)
+        if not self.require(reason != "not-relative", f"{label}: project-relative path required"):
             return None
-        path = (self.root / raw).resolve()
-        if not self.require(path.is_relative_to(self.root), f"{label}: path escapes project"):
+        if not self.require(path is not None, f"{label}: path escapes project"):
             return None
         if not self.require(path.is_file(), f"{label}: missing file {raw}"):
             return None
@@ -390,8 +453,8 @@ def research(need, framework, categories):
             "implementation_impacts": []}
 
 
-def research_verify(record, project, expressive=False):
-    check = RecordCheck(project)
+def research_verify(record, project, expressive=False, root: Path | None = None):
+    check = RecordCheck(project, root)
     if not check.require(isinstance(record, dict), "research: object required"):
         return check.result()
     check.require(record.get("schema") == RESEARCH_SCHEMA, "research: unsupported schema")
@@ -459,8 +522,8 @@ def research_verify(record, project, expressive=False):
     return check.result()
 
 
-def craft_check(receipt, project):
-    check = RecordCheck(project)
+def craft_check(receipt, project, root: Path | None = None):
+    check = RecordCheck(project, root)
     if not check.require(isinstance(receipt, dict), "receipt: object required"):
         return check.result()
     profile = receipt.get("profile")
@@ -533,8 +596,8 @@ def craft_check(receipt, project):
     return check.result()
 
 
-def platform_check(receipt, project):
-    check = RecordCheck(project)
+def platform_check(receipt, project, root: Path | None = None):
+    check = RecordCheck(project, root)
     if not check.require(isinstance(receipt, dict), "platform: receipt object required"):
         return check.result()
     path = check.file(receipt.get("platform_scout"), "platform_scout")
@@ -574,20 +637,21 @@ def platform_check(receipt, project):
 
 
 def verify(receipt, project: Path, require_platform=False) -> dict:
+    root = project_root(project)  # I1: the only resolution in this invocation.
     if not isinstance(receipt, dict) or receipt.get("format") != "lobster-receipt/v2":
-        result = verify_implementation(receipt, project)
+        result = verify_implementation(receipt, project, root)
         result["contract"] = "legacy-v1; does not satisfy v2 substantial-work gates"
         if require_platform:
             result["issues"].append("platform: receipt v2 required")
             result["status"] = "INCOMPLETE"
         return result
     legacy = dict(receipt, format="lobster-receipt/v1")
-    result = verify_implementation(legacy, project)
-    check = RecordCheck(project)
+    result = verify_implementation(legacy, project, root)
+    check = RecordCheck(project, root)
     check.issues.extend(result["issues"])
-    check.issues.extend(craft_check(receipt, project)["issues"])
+    check.issues.extend(craft_check(receipt, project, root)["issues"])
     if require_platform or "platform_scout" in receipt:
-        check.issues.extend(platform_check(receipt, project)["issues"])
+        check.issues.extend(platform_check(receipt, project, root)["issues"])
     summary = receipt.get("research")
     profile = receipt.get("profile", {})
     if not isinstance(profile, dict):
@@ -600,7 +664,7 @@ def verify(receipt, project: Path, require_platform=False) -> dict:
             path = check.file(summary.get("artifact"), "research.artifact")
             if path:
                 research_record = read_json(path)
-                check.issues.extend(research_verify(research_record, project, expressive=bool(profile.get("expressive")))["issues"])
+                check.issues.extend(research_verify(research_record, project, expressive=bool(profile.get("expressive")), root=root)["issues"])
                 if isinstance(research_record, dict):
                     for key, target, field in (("sources_consulted", "sources", "name"), ("selected_references", "candidates", "name"), ("impact", "implementation_impacts", "change")):
                         actual = check.strings(summary.get(key), f"research.{key}")
@@ -623,12 +687,140 @@ def verify(receipt, project: Path, require_platform=False) -> dict:
     return check.result()
 
 
+FINGERPRINT_SCHEMA = "lobster-fingerprint/v1"
+FINGERPRINT_ALGORITHM = "sha256-file-list/v1"
+# A run may only exclude trees that another verified hash chain already covers:
+# `artifacts/` by the evidence manifest, `proof/`, `.plif/` and `.lobster/` by the
+# receipt index. Nothing else may be excluded, so a run cannot hide `src/`.
+EXCLUDABLE_DIRECTORIES = {"node_modules", ".git"}
+EXCLUDABLE_PATHS = {"artifacts", "proof", ".plif", ".lobster"}
+
+
+# Node's lstat reports a Windows junction as a symbolic link while pathlib reports it
+# as a directory. Without this the runner and the verifier walk different trees and
+# disagree on the digest, so the reparse tag decides for both.
+_REPARSE_LINK_TAGS = {getattr(stat_module, name) for name in
+                      ("IO_REPARSE_TAG_MOUNT_POINT", "IO_REPARSE_TAG_SYMLINK")
+                      if hasattr(stat_module, name)}
+
+
+def is_link(path: Path) -> bool:
+    if path.is_symlink():
+        return True
+    try:
+        return getattr(os.lstat(path), "st_reparse_tag", 0) in _REPARSE_LINK_TAGS
+    except OSError:
+        return False
+
+
+def fingerprint_entries(root: Path, spec: dict) -> list[tuple[str, str]]:
+    """Collect the [relative-path, value] pairs a fingerprint spec covers."""
+    excluded_dirs = set(spec.get("excluded_directories") or [])
+    excluded_paths = set(spec.get("excluded_paths") or [])
+    entries: list[tuple[str, str]] = []
+
+    def walk(directory: Path):
+        for child in directory.iterdir():
+            if child.name in excluded_dirs:
+                continue
+            relative = child.relative_to(root).as_posix()
+            if relative in excluded_paths:
+                continue
+            if is_link(child):
+                entries.append((relative, "symlink"))
+            elif child.is_dir():
+                walk(child)
+            else:
+                entries.append((relative, hashlib.sha256(child.read_bytes()).hexdigest()))
+
+    walk(root)
+    # Sort by UTF-8 bytes, never by locale: the digest must not depend on the host.
+    entries.sort(key=lambda item: item[0].encode("utf-8"))
+    return entries
+
+
+def fingerprint_digest(spec: dict, entries) -> str:
+    """Length-delimited incremental digest; no serializer is involved (I10)."""
+    digest = hashlib.sha256()
+    digest.update(f"{FINGERPRINT_SCHEMA}\n{FINGERPRINT_ALGORITHM}\n".encode("utf-8"))
+    digest.update(("dirs:" + ",".join(sorted(spec.get("excluded_directories") or [])) + "\n").encode("utf-8"))
+    digest.update(("paths:" + ",".join(sorted(spec.get("excluded_paths") or [])) + "\n").encode("utf-8"))
+    digest.update(f"symlinks:{spec.get('symlink_policy')}\n".encode("utf-8"))
+    for relative, value in entries:
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\x00")
+        digest.update(value.encode("utf-8"))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def project_fingerprint(root: Path, spec: dict) -> tuple[str, int]:
+    entries = fingerprint_entries(root, spec)
+    return fingerprint_digest(spec, entries), len(entries)
+
+
+def is_receipt_index(root: Path | None, relative: str, receipt) -> bool:
+    """True when `relative` is the very receipt under verification, proved by content."""
+    if root is None or not isinstance(receipt, dict):
+        return False
+    path = contained_path(root, relative)
+    if path is None or not path.is_file():
+        return False
+    try:
+        return read_json(path) == receipt
+    except (OSError, ValueError):
+        return False
+
+
+def fingerprint_spec_issues(spec, root: Path | None = None, receipt=None) -> list[str]:
+    """A spec that excludes anything but an already-covered tree is refused.
+
+    One extra exclusion is permitted: the receipt index itself. The receipt is written
+    after the run that fingerprints the tree, so it can never be inside its own
+    fingerprint; that is a property of the workflow, not of this golden project. The
+    allowance is not taken on trust from a caller - the excluded file is read and must
+    parse to exactly the receipt being verified. Nothing else may be added, so a run
+    still cannot exclude `src/` to hide a change.
+    """
+    if not isinstance(spec, dict):
+        return ["LOBSTER_FINGERPRINT_SPEC_MISSING"]
+    issues = []
+    if spec.get("schema") != FINGERPRINT_SCHEMA:
+        issues.append(f"LOBSTER_FINGERPRINT_SPEC_INVALID:schema:{spec.get('schema')!r}")
+    if spec.get("algorithm") != FINGERPRINT_ALGORITHM:
+        issues.append(f"LOBSTER_FINGERPRINT_SPEC_INVALID:algorithm:{spec.get('algorithm')!r}")
+    if spec.get("symlink_policy") != "record-as-leaf":
+        issues.append(f"LOBSTER_FINGERPRINT_SPEC_INVALID:symlink_policy:{spec.get('symlink_policy')!r}")
+    for field, allowed in (("excluded_directories", EXCLUDABLE_DIRECTORIES), ("excluded_paths", EXCLUDABLE_PATHS)):
+        value = spec.get(field)
+        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+            issues.append(f"LOBSTER_FINGERPRINT_SPEC_INVALID:{field}")
+            continue
+        for item in sorted(set(value) - allowed):
+            if field == "excluded_paths" and is_receipt_index(root, item, receipt):
+                continue
+            issues.append(f"LOBSTER_FINGERPRINT_SCOPE_TOO_NARROW:{field}:{item}")
+    if not isinstance(spec.get("file_count"), int) or spec["file_count"] < 0:
+        issues.append("LOBSTER_FINGERPRINT_SPEC_INVALID:file_count")
+    return issues
+
+
 V3_STAGES = ("RECORD_VALID", "SOURCE_VERIFIED", "IMPLEMENTATION_VERIFIED", "EXECUTION_VERIFIED", "CRAFT_REVIEWED", "REGRESSION_VERIFIED")
+# The stage contract is published in every verify-v3 result so that "which stage owns
+# this finding" is answerable from the output alone and cannot be misread.
+STAGE_CONTRACT = {
+    "RECORD_VALID": "The whole record is structurally valid: receipt fields, the schema of EVERY referenced artifact, and every path a record names resolves inside the project. Gate for all stages below; their structural findings are counted here as well.",
+    "SOURCE_VERIFIED": "Research, platform scout and provenance lock content.",
+    "IMPLEMENTATION_VERIFIED": "Dependency closure and provenance: the graph's nodes still hash to the files on disk.",
+    "EXECUTION_VERIFIED": "The run happened against the current tree: scenario results, scenario/dependency fingerprint freshness, a recomputed project fingerprint whose declared scope may only omit already-covered trees, evidence-manifest freshness and the runner's own artifacts.",
+    "CRAFT_REVIEWED": "Independent craft review and the binding between the review and the evidence it reviewed.",
+    "REGRESSION_VERIFIED": "Repair ledger: before/after evidence and regression scenarios.",
+}
 V3_VERDICTS = ("DELIVERY_READY", "INCOMPLETE", "BLOCKED")
 
 
 def auto_profile(project: Path, brief: str = "") -> dict:
-    root = Path(project).resolve(strict=True)
+    root = project_root(project)
     source_suffixes = {".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".vue", ".svelte", ".html", ".py"}
     files = [path for path in root.rglob("*") if path.is_file() and path.suffix.lower() in source_suffixes and ".git" not in path.parts and "node_modules" not in path.parts]
     names = " ".join(path.name.lower() for path in files)
@@ -669,8 +861,8 @@ def auto_profile(project: Path, brief: str = "") -> dict:
     return {"schema": "lobster-surface-profile/v1", "source": "auto", "project": str(root), "classification": "substantial frontend" if categories["substantial"] else "scoped frontend edit", "signals": categories, "required_domains": sorted(set(domains)), "required_gates": sorted(set(required)), "platform_scout_required": platform_required, "browser_required": browser_required, "confidence": confidence, "not_applicable": [name for name, enabled in (("3d", categories["3d"]), ("motion", categories["motion"])) if not enabled]}
 
 
-def validate_artifact(reference, project, kind):
-    check = RecordCheck(project)
+def validate_artifact(reference, project, kind, root: Path | None = None):
+    check = RecordCheck(project, root)
     path = check.file(reference, f"{kind}.artifact")
     if not path:
         return None, check.issues
@@ -680,7 +872,11 @@ def validate_artifact(reference, project, kind):
         return None, [f"LOBSTER_SCHEMA_TYPE:{kind}: invalid JSON ({error})"]
     if not isinstance(value, dict):
         return None, [f"LOBSTER_SCHEMA_TYPE:{kind}: object required"]
-    schema_file = {"profile": "surface-profile-v1.json", "dependency_graph": "dependency-graph-v2.json", "scenario_matrix": "scenario-matrix-v1.json", "scenario_run": "runtime-v2.json", "craft_review": "visual-review-v1.json", "provenance_lock": "provenance-lock-v1.json", "evidence_manifest": "evidence-manifest-v3.json", "receipt": "lobster-receipt-v3.json"}.get(kind)
+    if kind == "scenario_run" and value.get("schema") == "lobster-runtime/v3":
+        schema_file = "runtime-v3.json"
+    else:
+        schema_file = None
+    schema_file = schema_file or {"profile": "surface-profile-v1.json", "dependency_graph": "dependency-graph-v2.json", "scenario_matrix": "scenario-matrix-v1.json", "scenario_run": "runtime-v2.json", "craft_review": "visual-review-v1.json", "provenance_lock": "provenance-lock-v1.json", "evidence_manifest": "evidence-manifest-v3.json", "receipt": "lobster-receipt-v3.json"}.get(kind)
     if schema_file:
         try:
             schema = read_json(PACKAGE_ROOT / "schemas" / schema_file)
@@ -716,11 +912,13 @@ def validate_artifact(reference, project, kind):
             check.issues.append(f"LOBSTER_SCHEMA_REQUIRED_FIELD:{kind}:{field}")
     expected = {
         "profile": "lobster-surface-profile/v1", "dependency_graph": "lobster-dependency-graph/v2",
-        "scenario_run": "lobster-runtime/v2", "craft_review": "lobster-visual-review/v1",
+        "scenario_run": ("lobster-runtime/v2", "lobster-runtime/v3"), "craft_review": "lobster-visual-review/v1",
         "verdict": "lobster-verdict/v1", "provenance_lock": "lobster-provenance/v1",
     }
-    if kind in expected and value.get("schema") != expected[kind]:
-        check.issues.append(f"LOBSTER_SCHEMA_VERSION:{kind}:{expected[kind]}")
+    if kind in expected:
+        allowed = expected[kind] if isinstance(expected[kind], tuple) else (expected[kind],)
+        if value.get("schema") not in allowed:
+            check.issues.append(f"LOBSTER_SCHEMA_VERSION:{kind}:{'|'.join(allowed)}")
     if kind == "scenario_run":
         for field in ("started_at", "finished_at", "dependency_fingerprint"):
             if not nonempty(value.get(field)):
@@ -812,7 +1010,18 @@ def compute_verdict(results):
 
 
 def v3_verify(receipt, project: Path) -> dict:
-    check = RecordCheck(project)
+    root = project_root(project)  # I1: the only resolution in this invocation.
+    check = RecordCheck(project, root)
+    cross_issues: list[str] = []
+    path_issues: list[str] = []
+
+    def contained(raw, label):
+        """Every record-supplied path in this function goes through here (I4/I7)."""
+        path, reason = contain(root, raw)
+        if path is None:
+            path_issues.append(f"LOBSTER_PATH_ESCAPES_PROJECT:{label}:{reason}:{raw!r}")
+        return path
+
     if not check.require(isinstance(receipt, dict) and receipt.get("format") == "lobster-receipt/v3", "receipt: lobster-receipt/v3 required"):
         return check.result()
     for field in ("surface", "revision"):
@@ -824,7 +1033,7 @@ def v3_verify(receipt, project: Path) -> dict:
     artifact_values = {}
     artifact_issues = {}
     for field in ("profile", "research", "platform_scout", "provenance_lock", "dependency_graph", "scenario_matrix", "scenario_run", "evidence_manifest", "craft_review", "repair_ledger"):
-        value, issues = load_and_validate_artifact(receipt.get(field), project, field)
+        value, issues = load_and_validate_artifact(receipt.get(field), root, field, root)
         artifact_values[field], artifact_issues[field] = value, issues
         check.issues.extend(issues)
     # Cross-artifact truth: run must point at the current matrix and dependency graph.
@@ -834,74 +1043,160 @@ def v3_verify(receipt, project: Path) -> dict:
     matrix_hash = None
     matrix_ref = receipt.get("scenario_matrix")
     if isinstance(matrix_ref, dict) and nonempty(matrix_ref.get("path")):
-        try: matrix_hash = hashlib.sha256((project / matrix_ref["path"]).read_bytes()).hexdigest()
-        except OSError: pass
+        matrix_path = contained(matrix_ref["path"], "scenario_matrix")
+        if matrix_path is not None:
+            try:
+                matrix_hash = hashlib.sha256(matrix_path.read_bytes()).hexdigest()
+            except OSError as exc:
+                cross_issues.append(f"LOBSTER_SCENARIO_MATRIX_UNREADABLE:{matrix_ref['path']}:{exc.strerror or exc}")
     if run and matrix and matrix_hash and run.get("scenario_hash") != matrix_hash:
-        check.issues.append("LOBSTER_SCENARIO_HASH_STALE")
+        cross_issues.append("LOBSTER_SCENARIO_HASH_STALE")
     if run and graph and run.get("dependency_fingerprint") != graph.get("fingerprint"):
-        check.issues.append("LOBSTER_DEPENDENCY_FINGERPRINT_STALE")
+        cross_issues.append("LOBSTER_DEPENDENCY_FINGERPRINT_STALE")
     evidence = artifact_values.get("evidence_manifest") or {}
     evidence_rows = evidence.get("evidence", []) if isinstance(evidence, dict) else []
     owners = {node.get("path") for node in graph.get("nodes", []) if isinstance(node, dict)}
     evidence_ids = set()
     for row in evidence_rows:
         if not isinstance(row, dict):
-            check.issues.append("LOBSTER_EVIDENCE_ROW_INVALID")
+            cross_issues.append("LOBSTER_EVIDENCE_ROW_INVALID")
             continue
         evidence_id = row.get("evidence_id", row.get("id"))
         if not nonempty(evidence_id) or evidence_id in evidence_ids:
-            check.issues.append("LOBSTER_EVIDENCE_ID_INVALID")
+            cross_issues.append("LOBSTER_EVIDENCE_ID_INVALID")
         evidence_ids.add(evidence_id)
         artifact_path = row.get("path") or row.get("artifact")
         if not nonempty(artifact_path) or not isinstance(row.get("sha256"), str) or not SHA256.fullmatch(row.get("sha256", "")):
-            check.issues.append(f"LOBSTER_EVIDENCE_HASH_INVALID:{evidence_id}")
+            cross_issues.append(f"LOBSTER_EVIDENCE_HASH_INVALID:{evidence_id}")
         else:
-            try:
-                actual = hashlib.sha256((project / artifact_path).read_bytes()).hexdigest()
-                if actual != row["sha256"].lower():
-                    check.issues.append(f"LOBSTER_EVIDENCE_ARTIFACT_STALE:{evidence_id}")
-            except OSError:
-                check.issues.append(f"LOBSTER_EVIDENCE_ARTIFACT_MISSING:{evidence_id}")
+            path = contained(artifact_path, f"evidence:{evidence_id}")
+            if path is not None:
+                try:
+                    if hashlib.sha256(path.read_bytes()).hexdigest() != row["sha256"].lower():
+                        cross_issues.append(f"LOBSTER_EVIDENCE_ARTIFACT_STALE:{evidence_id}")
+                except OSError as exc:
+                    cross_issues.append(f"LOBSTER_EVIDENCE_ARTIFACT_MISSING:{evidence_id}:{artifact_path}:{exc.strerror or exc}")
     for node in graph.get("nodes", []) if isinstance(graph.get("nodes"), list) else []:
         if isinstance(node, dict) and nonempty(node.get("path")):
+            path = contained(node["path"], "dependency_node")
+            if path is None:
+                continue
             try:
-                current = hashlib.sha256((project / node["path"]).read_bytes()).hexdigest()
-                if current != node.get("sha256"):
-                    check.issues.append(f"LOBSTER_DEPENDENCY_CLOSURE_STALE:{node['path']}")
-            except OSError:
-                check.issues.append(f"LOBSTER_DEPENDENCY_NODE_MISSING:{node['path']}")
+                if hashlib.sha256(path.read_bytes()).hexdigest() != node.get("sha256"):
+                    cross_issues.append(f"LOBSTER_DEPENDENCY_CLOSURE_STALE:{node['path']}")
+            except OSError as exc:
+                code = "LOBSTER_DEPENDENCY_NODE_UNREADABLE" if path.exists() else "LOBSTER_DEPENDENCY_NODE_MISSING"
+                cross_issues.append(f"{code}:{node['path']}:{exc.strerror or exc}")
     for row in evidence_rows:
         if isinstance(row, dict):
             if row.get("phase", "after") != "before" and (row.get("scenario_hash") != run.get("scenario_hash") or row.get("dependency_fingerprint") != graph.get("fingerprint")):
-                check.issues.append(f"LOBSTER_EVIDENCE_STALE:{row.get('evidence_id', row.get('id', 'unknown'))}")
+                cross_issues.append(f"LOBSTER_EVIDENCE_STALE:{row.get('evidence_id', row.get('id', 'unknown'))}")
             for owner in row.get("owners", []):
                 if owner not in owners:
-                    check.issues.append(f"LOBSTER_EVIDENCE_OWNER_OUTSIDE_CLOSURE:{owner}")
+                    cross_issues.append(f"LOBSTER_EVIDENCE_OWNER_OUTSIDE_CLOSURE:{owner}")
+    # BUG-3: scenario_run artifacts are agent-written record paths and were never
+    # checked, which let a run express artifacts against a different root than the
+    # evidence manifest without anything noticing.
+    run_issues: list[str] = []
+    evidence_paths = {row.get("path") or row.get("artifact") for row in evidence_rows if isinstance(row, dict)}
+    for scenario in run.get("scenarios", []) if isinstance(run.get("scenarios"), list) else []:
+        if not isinstance(scenario, dict):
+            continue
+        for item in scenario.get("artifacts", []) if isinstance(scenario.get("artifacts"), list) else []:
+            if not isinstance(item, dict):
+                run_issues.append("LOBSTER_RUNTIME_ARTIFACT_INVALID")
+                continue
+            raw = item.get("path")
+            path, reason = contain(root, raw)
+            if path is None:
+                run_issues.append(f"LOBSTER_RUNTIME_ARTIFACT_ESCAPES:{scenario.get('id')}:{reason}:{raw!r}")
+                continue
+            digest = item.get("sha256")
+            if not isinstance(digest, str) or not SHA256.fullmatch(digest):
+                run_issues.append(f"LOBSTER_RUNTIME_ARTIFACT_HASH_INVALID:{raw}")
+                continue
+            try:
+                if hashlib.sha256(path.read_bytes()).hexdigest() != digest.lower():
+                    run_issues.append(f"LOBSTER_RUNTIME_ARTIFACT_STALE:{raw}")
+            except OSError as exc:
+                run_issues.append(f"LOBSTER_RUNTIME_ARTIFACT_MISSING:{raw}:{exc.strerror or exc}")
+            if evidence_paths and raw not in evidence_paths:
+                run_issues.append(f"LOBSTER_RUNTIME_ARTIFACT_UNCLAIMED:{raw}")
+
+    # The project fingerprint is now recomputable: the run declares the exact scope it
+    # covered, that scope may only omit trees another verified chain already covers, and
+    # the digest is rebuilt here from the files on disk.
+    if run:
+        if run.get("schema") != "lobster-runtime/v3":
+            run_issues.append("LOBSTER_PROJECT_FINGERPRINT_UNVERIFIABLE:"
+                              "runtime/v3 declares the fingerprint scope; this run does not")
+        else:
+            spec = run.get("fingerprint_spec")
+            spec_issues = fingerprint_spec_issues(spec, root, receipt)
+            run_issues.extend(spec_issues)
+            if not spec_issues:
+                try:
+                    digest, count = project_fingerprint(root, spec)
+                except OSError as exc:
+                    run_issues.append(f"LOBSTER_PROJECT_FINGERPRINT_UNREADABLE:{exc.strerror or exc}")
+                else:
+                    if count != spec["file_count"]:
+                        run_issues.append(
+                            f"LOBSTER_PROJECT_FINGERPRINT_FILE_COUNT:{spec['file_count']}!={count}")
+                    if digest != run.get("project_fingerprint"):
+                        run_issues.append("LOBSTER_PROJECT_FINGERPRINT_STALE")
+
     review = artifact_values.get("craft_review") or {}
     evidence_ref = receipt.get("evidence_manifest") or {}
     evidence_path = evidence_ref.get("path") if isinstance(evidence_ref, dict) else None
     if evidence_path:
-        try:
-            evidence_hash = hashlib.sha256((project / evidence_path).read_bytes()).hexdigest()
-            if review.get("evidence_manifest_hash") != evidence_hash or review.get("review_input_hash") != evidence_hash:
-                check.issues.append("LOBSTER_REVIEW_INPUT_HASH_STALE")
-        except OSError:
-            check.issues.append("LOBSTER_REVIEW_INPUT_HASH_MISSING")
+        manifest_path = contained(evidence_path, "evidence_manifest")
+        if manifest_path is not None:
+            try:
+                evidence_hash = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+                if review.get("evidence_manifest_hash") != evidence_hash or review.get("review_input_hash") != evidence_hash:
+                    cross_issues.append("LOBSTER_REVIEW_INPUT_HASH_STALE")
+            except OSError as exc:
+                cross_issues.append(f"LOBSTER_REVIEW_INPUT_HASH_MISSING:{evidence_path}:{exc.strerror or exc}")
     ledger = artifact_values.get("repair_ledger") or {}
     for repair in ledger.get("repairs", []) if isinstance(ledger.get("repairs"), list) else []:
         for field in ("before_evidence", "after_evidence"):
             for evidence_id in repair.get(field, []) if isinstance(repair, dict) and isinstance(repair.get(field), list) else []:
                 if evidence_id not in evidence_ids:
-                    check.issues.append(f"LOBSTER_REPAIR_EVIDENCE_UNKNOWN:{evidence_id}")
-    results = [verify_record(receipt, artifact_issues.get("profile", [])),
+                    cross_issues.append(f"LOBSTER_REPAIR_EVIDENCE_UNKNOWN:{evidence_id}")
+    # D. Cross-artifact findings are attributed to the stage whose claim they break,
+    # not dumped wholesale into EXECUTION_VERIFIED.
+    def bucket(*prefixes):
+        return [issue for issue in cross_issues if issue.startswith(prefixes)]
+
+    implementation_cross = bucket("LOBSTER_DEPENDENCY_CLOSURE_STALE", "LOBSTER_DEPENDENCY_NODE_MISSING",
+                                  "LOBSTER_DEPENDENCY_NODE_UNREADABLE")
+    craft_cross = bucket("LOBSTER_REVIEW_INPUT_HASH_")
+    regression_cross = bucket("LOBSTER_REPAIR_EVIDENCE_UNKNOWN")
+    accounted = set(implementation_cross) | set(craft_cross) | set(regression_cross)
+    execution_cross = [issue for issue in cross_issues if issue not in accounted]
+
+    # C. RECORD_VALID means the whole record is structurally valid: the receipt's own
+    # fields, every referenced artifact's schema, and every path a record names. It is
+    # the gate for the stages below it, so their structural issues are counted here too.
+    record_issues = list(check.issues) + path_issues + [
+        issue for issues in artifact_issues.values() for issue in issues]
+
+    results = [verify_record(receipt, record_issues),
                verify_source(artifact_values, artifact_issues.get("research", []) + artifact_issues.get("platform_scout", []) + artifact_issues.get("provenance_lock", [])),
-               verify_implementation_stage(artifact_values, artifact_issues.get("dependency_graph", []) + artifact_issues.get("provenance_lock", [])),
-               verify_execution(artifact_values, artifact_issues.get("scenario_run", []) + artifact_issues.get("scenario_matrix", []) + check.issues),
-               verify_craft(artifact_values, artifact_issues.get("craft_review", [])),
-               verify_regression(artifact_values, artifact_issues.get("repair_ledger", []))]
+               verify_implementation_stage(artifact_values, artifact_issues.get("dependency_graph", []) + artifact_issues.get("provenance_lock", []) + implementation_cross),
+               verify_execution(artifact_values, artifact_issues.get("scenario_run", []) + artifact_issues.get("scenario_matrix", []) + artifact_issues.get("evidence_manifest", []) + execution_cross + run_issues),
+               verify_craft(artifact_values, artifact_issues.get("craft_review", []) + craft_cross),
+               verify_regression(artifact_values, artifact_issues.get("repair_ledger", []) + regression_cross)]
+    check.issues.extend(path_issues)
+    check.issues.extend(cross_issues)
+    check.issues.extend(run_issues)
     computed_stages = {item["stage"]: item["status"] for item in results}
     computed_verdict = compute_verdict(results)
-    return {"status": computed_verdict, "computed_stages": computed_stages, "stage_results": results, "computed_verdict": computed_verdict, "issues": check.issues, "scope": "Stages and verdict are computed from child artifact content; receipt claims are ignored."}
+    return {"status": computed_verdict, "computed_stages": computed_stages, "stage_results": results,
+            "computed_verdict": computed_verdict, "issues": check.issues,
+            "stage_contract": STAGE_CONTRACT,
+            "scope": "Stages and verdict are computed from child artifact content; receipt claims are ignored."}
 
 
 def plan(project: Path, brief: str = "") -> dict:
@@ -971,8 +1266,9 @@ def main() -> int:
             print(json.dumps({"status": "READY", "profile": profile, "next": "Record exact platform support and fallback in platform-scout.json"}, ensure_ascii=False, indent=2))
             return 0
         if args.command == "doctor":
-            print(json.dumps(doctor(), ensure_ascii=False, indent=2))
-            return 0 if doctor()["status"] == "READY" else 2
+            report = doctor()
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 0 if report["status"] == "READY" else 2
         if args.command == "inspect":
             if not args.input:
                 print(json.dumps({"status": "INCOMPLETE", "command": "inspect", "reason": "runtime input artifact is required"}, ensure_ascii=False, indent=2))
@@ -1045,8 +1341,16 @@ def main() -> int:
             result = verify(record, args.project, args.require_platform)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if (args.command != "verify-v3" and result["status"] in ("READY_FOR_REVIEW", "DELIVERY_READY")) or (args.command == "verify-v3" and result["status"] == "DELIVERY_READY") else 1
+    except ProjectPathError as exc:
+        # I8: a filesystem failure names the operation and the path it happened on.
+        print(json.dumps({"status": "ERROR", "operation": exc.operation, "path": exc.path,
+                          "reason": exc.reason}, ensure_ascii=False))
+        return 2
     except (OSError, ValueError, TypeError) as exc:
-        print(json.dumps({"status": "ERROR", "reason": str(exc)}, ensure_ascii=False))
+        payload = {"status": "ERROR", "reason": str(exc)}
+        if isinstance(exc, OSError) and exc.filename:
+            payload.update(operation="filesystem", path=str(exc.filename), reason=exc.strerror or str(exc))
+        print(json.dumps(payload, ensure_ascii=False))
         return 2
 
 

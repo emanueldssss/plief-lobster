@@ -1,0 +1,82 @@
+name: lobster
+
+# DELIVERY_READY_CROSS_PLATFORM is claimable only when the `verify` job is green on
+# BOTH ubuntu-latest and windows-latest for the same commit. A green Windows run alone
+# proves nothing about POSIX path semantics; see tests/CROSS-PLATFORM.md.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: ${{ matrix.os }} · py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        # The fingerprint hashes file bytes; never let the checkout rewrite them.
+        with:
+          fetch-depth: 0
+
+      - name: Assert the checkout did not rewrite line endings
+        shell: bash
+        run: |
+          git config core.autocrlf false
+          test -z "$(git status --porcelain)" || { git status --porcelain; exit 1; }
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Playwright (browser proofs)
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.63.0
+          npx playwright install --with-deps chromium
+
+      - name: doctor
+        shell: bash
+        run: python scripts/lobster.py doctor
+
+      - name: Golden receipt verifies from a foreign cwd
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/foreign"
+          cd "$RUNNER_TEMP/foreign"
+          python "$GITHUB_WORKSPACE/scripts/lobster.py" verify-v3 \
+            "$GITHUB_WORKSPACE/golden/dashboard-proof/receipt-final.json" \
+            --project "$GITHUB_WORKSPACE/golden/dashboard-proof"
+
+      - name: Full test suite
+        shell: bash
+        working-directory: tests
+        run: python -m unittest discover -v
+
+      - name: Cross-implementation fingerprint equality (Node vs Python)
+        shell: bash
+        working-directory: tests
+        run: python -m unittest test_fingerprint.AlgorithmTests -v
+
+      - name: Byte checks
+        shell: bash
+        run: |
+          python -m compileall -q scripts tests
+          for f in scripts/*.mjs scripts/lib/*.mjs; do node --check "$f"; done
+
+  cross-platform-gate:
+    name: DELIVERY_READY_CROSS_PLATFORM
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Every matrix leg passed on Linux and Windows for this commit."
+          echo "DELIVERY_READY_CROSS_PLATFORM = TRUE"

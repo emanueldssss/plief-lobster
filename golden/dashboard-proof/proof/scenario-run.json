@@ -1,18 +1,33 @@
 {
-  "schema": "lobster-runtime/v2",
+  "schema": "lobster-runtime/v3",
   "status": "PASS",
   "target": "http://127.0.0.1:4176",
   "runner": "lobster-browser",
-  "runner_version": "3.1.0",
+  "runner_version": "3.1.3",
   "browser_engine": "chromium",
   "browser_version": "153.0.8010.12",
-  "run_id": "RUN-1788909171903",
-  "started_at": "2026-09-08T23:12:51.903Z",
-  "finished_at": "2026-09-08T23:12:51.903Z",
-  "project_revision": "d001d899002edc3ee3a426899928dc9392b12548",
-  "scenario_hash": "34a6b02ea7353b1ff485922f4f6a621e7b70abcf0aff69a4a6f78b03a1923d06",
-  "project_fingerprint": "cbe0e9bd0cb2143b4e8c7965a105cafe61aef7d6d6c4f30b13eb4ca49a632032",
-  "dependency_fingerprint": "61a419e3bbe592f8a7dc699a9fa87e11ea31f98f45f48611fcc73c0cbf93dabc",
+  "run_id": "RUN-1788973931056",
+  "started_at": "2026-09-09T17:12:11.056Z",
+  "finished_at": "2026-09-09T17:12:11.056Z",
+  "project_revision": "05eea6e03220544ae1050b1afadc9fec5574dd1f",
+  "scenario_hash": "d9baf85c03595db549e4e4a16b117c66193d88fb2adc2389a244303c4e05bc49",
+  "project_fingerprint": "1937d503620eebbd1b33e0f43c388f141e0eb080f560e8c184dd0e3a0125c513",
+  "fingerprint_spec": {
+    "schema": "lobster-fingerprint/v1",
+    "algorithm": "sha256-file-list/v1",
+    "excluded_directories": [
+      ".git",
+      "node_modules"
+    ],
+    "excluded_paths": [
+      "artifacts",
+      "proof",
+      "receipt-final.json"
+    ],
+    "symlink_policy": "record-as-leaf",
+    "file_count": 6
+  },
+  "dependency_fingerprint": "2bcf3be63f267e29a5b50702020a5a782cd779e3e63cdb8c49cf6f8ce7b910d2",
   "runtime_errors": [],
   "network_errors": [],
   "scenarios": [
@@ -30,7 +45,7 @@
         },
         {
           "action": "screenshot",
-          "path": "golden/dashboard-proof/artifacts/final/mobile.png"
+          "path": "artifacts/final/mobile.png"
         }
       ],
       "assertions": [
@@ -61,12 +76,12 @@
       "artifacts": [
         {
           "kind": "screenshot",
-          "path": "golden/dashboard-proof/artifacts/final/mobile.png",
+          "path": "artifacts/final/mobile.png",
           "sha256": "5176e2f5772053d8701c2739209620afb0c1f6daef59d44fe20056fbe685c587"
         }
       ],
-      "started_at": "2026-09-08T23:12:51.507Z",
-      "finished_at": "2026-09-08T23:12:51.629Z"
+      "started_at": "2026-09-09T17:12:10.788Z",
+      "finished_at": "2026-09-09T17:12:10.863Z"
     },
     {
       "id": "dialog-focus-restoration",
@@ -94,7 +109,7 @@
         },
         {
           "action": "screenshot",
-          "path": "golden/dashboard-proof/artifacts/final/dialog.png"
+          "path": "artifacts/final/dialog.png"
         }
       ],
       "assertions": [
@@ -113,12 +128,12 @@
       "artifacts": [
         {
           "kind": "screenshot",
-          "path": "golden/dashboard-proof/artifacts/final/dialog.png",
+          "path": "artifacts/final/dialog.png",
           "sha256": "818bf5cf294b6f8d8516926434bf50f367183371a62f09101677e586e6fd0af4"
         }
       ],
-      "started_at": "2026-09-08T23:12:51.629Z",
-      "finished_at": "2026-09-08T23:12:51.869Z"
+      "started_at": "2026-09-09T17:12:10.863Z",
+      "finished_at": "2026-09-09T17:12:11.022Z"
     },
     {
       "id": "forced-motion-fallback",
@@ -147,8 +162,8 @@
       "runtime_errors": [],
       "network_errors": [],
       "artifacts": [],
-      "started_at": "2026-09-08T23:12:51.869Z",
-      "finished_at": "2026-09-08T23:12:51.903Z"
+      "started_at": "2026-09-09T17:12:11.022Z",
+      "finished_at": "2026-09-09T17:12:11.056Z"
     }
   ]
 }

@@ -4,42 +4,42 @@
   "revision": "9e70799",
   "profile": {
     "path": "proof/profile.json",
-    "sha256": "84460d9ed415187ff8eaec06fa85c52abfb4d10eeade24bece1f068041308830"
+    "sha256": "3ef5570cd49c9787342961285c65c81f365e35ecad4ae76cc5e43787f1f31b79"
   },
   "research": {
     "path": "proof/research.json",
-    "sha256": "3eefd329267514862777ce1c8553d2d55652c80c6a93c8287135946122001542"
+    "sha256": "1d685a4af3645634589da889c19f957ec52ab6144ac9182b5e06dc16da208b82"
   },
   "platform_scout": {
     "path": "proof/platform.json",
-    "sha256": "7dd9e05c96708a981c9bf3ed8a5bb10ed13d73b136865da8237969a037c1aa19"
+    "sha256": "4b5b9c9ffbf14a1319cb8be0b1ab0252cbd0a617af29f650f9e873ce27e82320"
   },
   "provenance_lock": {
     "path": "proof/provenance.json",
-    "sha256": "ff69514275eb1f9d02d586e9052ac50ee333f4da1fb5e09a83f68dc8797a8a67"
+    "sha256": "83800fa95e032a9469d55bcb49f88128012329a26feaa7973076f564d0f593a2"
   },
   "dependency_graph": {
     "path": "proof/dependency-graph.json",
-    "sha256": "90534ede99eedb723dfcb8651967af5d35897cfacb217d5758d3787809692bc7"
+    "sha256": "2f595be20cd2c512f2eb71f74c94c1caf9c5415c0e86be8f52b19aaf19ee7e12"
   },
   "scenario_matrix": {
     "path": "proof/scenario-matrix.json",
-    "sha256": "34a6b02ea7353b1ff485922f4f6a621e7b70abcf0aff69a4a6f78b03a1923d06"
+    "sha256": "d9baf85c03595db549e4e4a16b117c66193d88fb2adc2389a244303c4e05bc49"
   },
   "scenario_run": {
     "path": "proof/scenario-run.json",
-    "sha256": "d4a74be8f6369b239fa40b7a15c8b057d1794ae4336cceb0050581f6c3905948"
+    "sha256": "f7d8f27896fa4adf0867f57957d43b984b9c1bce1b913e3b9c9120946105710c"
   },
   "evidence_manifest": {
     "path": "proof/evidence.json",
-    "sha256": "54080fe50d2d59f0e2c4164fa63e7b01a167e52286190f96d59d022b7dbef9c4"
+    "sha256": "643a3612b6495517acbe5d1485c2c2af93bdbfe2cc77f526186ed3872ff0909a"
   },
   "craft_review": {
     "path": "proof/craft.json",
-    "sha256": "1a27ccdb46c1bdc07926594828ecfaf8264e4de198666703fe845e88656f5ef0"
+    "sha256": "a3c354958d9e1bd0b5a961424050117a036be86969d7c09a6f5904137d61e9d4"
   },
   "repair_ledger": {
     "path": "proof/repair.json",
-    "sha256": "dc8fb4460113a1cadc3b52c632dad94f54c4f785a012292e4fb5090ed0715510"
+    "sha256": "a0826ec73423f9e60e49dbbe3ffb0f2c5378d88f9e6bae3abc026f9682b39f2f"
   }
 }

@@ -7,19 +7,19 @@
   "nodes": [
     {
       "path": "app.js",
-      "sha256": "0aa0b6a94fa9f77b230cebfe83092868aa10b29c5e304931702ddc67e893add1"
+      "sha256": "d4f538f4be85f2821fd255386879be1912bee6304121d1e6b366249d4ca5a22d"
     },
     {
       "path": "index.html",
-      "sha256": "65d46770f224c0cdad3c08a7e358d5630e40a1e4be102ae0d04c6f4c8340b86e"
+      "sha256": "38337096562fd3e104f443732c7c78c8fdaf35337b96861f7d1779b43a7a66b1"
     },
     {
       "path": "styles.css",
-      "sha256": "fa6e44285d257464a536ee1b931d19102000fddf3b91de0dab0ca91ae4859ade"
+      "sha256": "ba6ff6132c5ebb6fb8f79b3a76aa0670b0953e36b97313195db31fe8e50b8873"
     },
     {
       "path": "tokens.css",
-      "sha256": "014207ccc77e8edd11e740f82eb6686ae0b52dd9a95744bb8f8b9eb30fa8023a"
+      "sha256": "f3c2ed173fdc7fd3665327c379f032baf20fa5d15bb00f5de718c2dcd0064cfc"
     }
   ],
   "edges": [
@@ -42,5 +42,5 @@
   ],
   "unresolved": [],
   "confidence": "FULL",
-  "fingerprint": "61a419e3bbe592f8a7dc699a9fa87e11ea31f98f45f48611fcc73c0cbf93dabc"
+  "fingerprint": "2bcf3be63f267e29a5b50702020a5a782cd779e3e63cdb8c49cf6f8ce7b910d2"
 }

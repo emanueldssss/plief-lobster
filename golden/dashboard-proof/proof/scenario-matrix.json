@@ -14,7 +14,7 @@
         },
         {
           "action": "screenshot",
-          "path": "golden/dashboard-proof/artifacts/final/mobile.png"
+          "path": "artifacts/final/mobile.png"
         }
       ],
       "assertions": [
@@ -54,7 +54,7 @@
         },
         {
           "action": "screenshot",
-          "path": "golden/dashboard-proof/artifacts/final/dialog.png"
+          "path": "artifacts/final/dialog.png"
         }
       ],
       "assertions": [
@@ -93,4 +93,3 @@
     }
   ]
 }
-

@@ -8,9 +8,9 @@
       "scenario_id": "mobile-overflow-and-runtime",
       "path": "artifacts/final/mobile.png",
       "sha256": "5176e2f5772053d8701c2739209620afb0c1f6daef59d44fe20056fbe685c587",
-      "scenario_hash": "34a6b02ea7353b1ff485922f4f6a621e7b70abcf0aff69a4a6f78b03a1923d06",
-      "dependency_fingerprint": "61a419e3bbe592f8a7dc699a9fa87e11ea31f98f45f48611fcc73c0cbf93dabc",
-      "project_fingerprint": "cbe0e9bd0cb2143b4e8c7965a105cafe61aef7d6d6c4f30b13eb4ca49a632032",
+      "scenario_hash": "d9baf85c03595db549e4e4a16b117c66193d88fb2adc2389a244303c4e05bc49",
+      "dependency_fingerprint": "2bcf3be63f267e29a5b50702020a5a782cd779e3e63cdb8c49cf6f8ce7b910d2",
+      "project_fingerprint": "1937d503620eebbd1b33e0f43c388f141e0eb080f560e8c184dd0e3a0125c513",
       "owners": [
         "index.html",
         "styles.css",
@@ -24,9 +24,9 @@
       "scenario_id": "dialog-focus-restoration",
       "path": "artifacts/final/dialog.png",
       "sha256": "818bf5cf294b6f8d8516926434bf50f367183371a62f09101677e586e6fd0af4",
-      "scenario_hash": "34a6b02ea7353b1ff485922f4f6a621e7b70abcf0aff69a4a6f78b03a1923d06",
-      "dependency_fingerprint": "61a419e3bbe592f8a7dc699a9fa87e11ea31f98f45f48611fcc73c0cbf93dabc",
-      "project_fingerprint": "cbe0e9bd0cb2143b4e8c7965a105cafe61aef7d6d6c4f30b13eb4ca49a632032",
+      "scenario_hash": "d9baf85c03595db549e4e4a16b117c66193d88fb2adc2389a244303c4e05bc49",
+      "dependency_fingerprint": "2bcf3be63f267e29a5b50702020a5a782cd779e3e63cdb8c49cf6f8ce7b910d2",
+      "project_fingerprint": "1937d503620eebbd1b33e0f43c388f141e0eb080f560e8c184dd0e3a0125c513",
       "owners": [
         "index.html",
         "app.js"
@@ -40,9 +40,9 @@
       "scenario_id": "mobile-overflow-and-runtime",
       "path": "artifacts/baseline/mobile.png",
       "sha256": "799114408a1b62c20c200a3161c01a4b89a6e2d85e540b9c9b677cce2932ad6e",
-      "scenario_hash": "34a6b02ea7353b1ff485922f4f6a621e7b70abcf0aff69a4a6f78b03a1923d06",
-      "dependency_fingerprint": "61a419e3bbe592f8a7dc699a9fa87e11ea31f98f45f48611fcc73c0cbf93dabc",
-      "project_fingerprint": "cbe0e9bd0cb2143b4e8c7965a105cafe61aef7d6d6c4f30b13eb4ca49a632032",
+      "scenario_hash": "d9baf85c03595db549e4e4a16b117c66193d88fb2adc2389a244303c4e05bc49",
+      "dependency_fingerprint": "2bcf3be63f267e29a5b50702020a5a782cd779e3e63cdb8c49cf6f8ce7b910d2",
+      "project_fingerprint": "1937d503620eebbd1b33e0f43c388f141e0eb080f560e8c184dd0e3a0125c513",
       "owners": [
         "index.html",
         "styles.css",
@@ -57,9 +57,9 @@
       "scenario_id": "dialog-focus-restoration",
       "path": "artifacts/baseline/dialog.png",
       "sha256": "91780c1e7a2f97587cf7f59bc7a98b7e531f83406f128daa4c0ffca8c3734d57",
-      "scenario_hash": "34a6b02ea7353b1ff485922f4f6a621e7b70abcf0aff69a4a6f78b03a1923d06",
-      "dependency_fingerprint": "61a419e3bbe592f8a7dc699a9fa87e11ea31f98f45f48611fcc73c0cbf93dabc",
-      "project_fingerprint": "cbe0e9bd0cb2143b4e8c7965a105cafe61aef7d6d6c4f30b13eb4ca49a632032",
+      "scenario_hash": "d9baf85c03595db549e4e4a16b117c66193d88fb2adc2389a244303c4e05bc49",
+      "dependency_fingerprint": "2bcf3be63f267e29a5b50702020a5a782cd779e3e63cdb8c49cf6f8ce7b910d2",
+      "project_fingerprint": "1937d503620eebbd1b33e0f43c388f141e0eb080f560e8c184dd0e3a0125c513",
       "owners": [
         "index.html",
         "app.js"
